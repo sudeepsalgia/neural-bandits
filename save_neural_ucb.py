@@ -20,17 +20,19 @@ n_arms = 4
 n_features = 10
 noise_std = 0.1
 nu = 0.1
-n_sim = 5
+n_sim = 15
 bandit_seed = 42
-nn_seeds = (np.random.random(10)*1000).astype('int')
+nn_seeds = (np.random.random(n_sim)*1000).astype('int')
 delta = 0.1
+eta = 0.01
+_lambda = 0.5
 
 # Neural Network parameters
 hidden_size = 20
 epochs = 200
 train_every = 1
 use_cuda = False
-B = 4
+B = 6
 s = 1
 
 ### mean reward function
@@ -40,9 +42,9 @@ a /= np.linalg.norm(a, ord=2)
 # A = np.random.normal(scale=0.5, size=(n_features,n_features))
 
 # 2 <a, x>^2
-# reward_func = lambda x: 2*np.dot(a, x)**2
+# reward_func = lambda x: 4*np.dot(a, x)**2
 # reward_func = lambda x: np.linalg.norm(np.dot(A, x), ord=2)
-reward_func = lambda x: np.cos(3*np.dot(a, x))
+reward_func = lambda x: 4*np.sin(np.dot(a, x))**2
 
 bandit = ContextualBandit(time_horizon, n_arms, n_features, reward_func, noise_std=noise_std, seed=bandit_seed)
 
@@ -62,33 +64,28 @@ settings = {'T': time_horizon,
 			'B': B,
 			'activation function': 'ReLU ' + str(s),
 			'delta': delta,
-			'algo': 'NeuralUCB'}                                        
-
-eta_vec = [1e-3, 1e-2, 1e-1]
-lambda_vec = [0.05, 0.1, 0.5]
-
-
-for eta, _lambda in itertools.product(eta_vec, lambda_vec):
-# eta = 0.001
-# for _lambda in lambda_vec:
-
-	regrets = np.empty((n_sim, time_horizon))
-	time_taken = np.empty(n_sim)
+			'algo': 'NeuralUCB',
+			'eta': eta,
+			'lambda': _lambda }                                        
 
 
-	for n in range(n_sim):
-		bandit.reset_rewards()
-		model = NeuralUCB(bandit, hidden_size=hidden_size, _lambda=_lambda, delta=delta, nu=nu, training_window=time_horizon,
-						  eta=eta, B=B, epochs=epochs, train_every=train_every, use_cuda=use_cuda, activation_param=s, model_seed=nn_seeds[n])
+regrets = np.empty((n_sim, time_horizon))
+time_taken = np.empty(n_sim)
 
-		model.run()
-		regrets[n] = np.cumsum(model.regret)
-		time_taken[n] = model.time_elapsed
 
-	save_tuple = (settings, regrets, time_taken)
-	filename = './Hyperparamter_' + settings['reward_func'] + '_' + settings['algo'] + '_' + str(int(-np.log10(eta))) + '_' + str(int(100*_lambda)) + '.pkl'
-	with open(filename, 'wb') as f:
-		pickle.dump(save_tuple, f)
-	f.close()
+for n in range(n_sim):
+	bandit.reset_rewards()
+	model = NeuralUCB(bandit, hidden_size=hidden_size, _lambda=_lambda, delta=delta, nu=nu, training_window=time_horizon,
+					  eta=eta, B=B, epochs=epochs, train_every=train_every, use_cuda=use_cuda, activation_param=s, model_seed=nn_seeds[n])
 
-	print(np.mean(regrets[:, -1]))
+	model.run()
+	regrets[n] = np.cumsum(model.regret)
+	time_taken[n] = model.time_elapsed
+
+save_tuple = (settings, regrets, time_taken)
+filename = './' + settings['algo'] + '_' + settings['reward_func'] + '.pkl'
+with open(filename, 'wb') as f:
+	pickle.dump(save_tuple, f)
+f.close()
+
+
