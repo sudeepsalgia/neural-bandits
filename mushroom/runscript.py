@@ -1,18 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from bandit import *
+from banditreal import *
 from neuralucb import *
-from supnnucb import *
-from newalg import *
-from batchedneuralucb import *
-from neuralts import *
-from neuralgreedy import *
 sns.set()
+import pickle 
 
-T = int(1e3)
-n_arms = 4
-n_features = 10
+T = int(2e3)
+n_arms = 2
 noise_std = 0.1
 
 confidence_scaling_factor = 0.1 #noise_std
@@ -23,34 +18,41 @@ SEED = 42
 np.random.seed(SEED*2)
 
 p = 0
-hidden_size = 20
+hidden_size = 100
 epochs = 200
-train_every = 1
-use_cuda = False
+train_every = 10
+use_cuda = False 
+
+filename = 'mushroom.pkl'
+with open(filename, 'rb') as f:
+	(X_mushroom, y_mushroom) = pickle.load(f)
+	f.close()
+
+
 
 ### mean reward function
 # a = np.random.randn(n_features)
 # a /= np.linalg.norm(a, ord=2)
 # reward_func = lambda x: 4*np.dot(a, x)**2
-A = np.random.normal(scale=0.5, size=(n_features, n_features))
-reward_func = lambda x: np.linalg.norm(np.dot(A, x), ord=2)
+# A = np.random.normal(scale=0.5, size=(n_features, n_features))
+# reward_func = lambda x: np.linalg.norm(np.dot(A, x), ord=2)
 # reward_func = lambda x: 4*np.sin(np.dot(a, x))**2
 
-bandit = ContextualBandit(T, n_arms, n_features, reward_func, noise_std=noise_std, seed=SEED)
+bandit = ContextualBanditReal(n_arms=n_arms, X=X_mushroom, Y=y_mushroom, seed=SEED)
 
 
 regrets = np.empty((n_sim, T))
 
 for i in range(n_sim):
 	bandit.reset_rewards()
-	model = NeuralGreedy(bandit,
+	model = NeuralUCB(bandit,
 					  hidden_size=hidden_size,
-					  _lambda=0.5,
+					  _lambda=3,
 					  delta=0.1,
 					  nu=confidence_scaling_factor,
-					  training_window=1000,
+					  training_window=T,
 					  p=p,
-					  eta=0.01, B=6, eps=0.2,
+					  eta=0.01, B=1,
 					  epochs=epochs,
 					  train_every=train_every,
 					  use_cuda=use_cuda,

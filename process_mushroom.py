@@ -4,6 +4,7 @@ import os
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.preprocessing import LabelEncoder
+import pickle
 
 
 df = pd.read_csv('./datasets/mushrooms.csv')
@@ -25,5 +26,10 @@ ct = df_new.to_numpy()
 
 X_mushroom = ct[:, 1:]
 y_mushroom = ct[:, 0]
+
+filename = 'mushroom.pkl'
+with open(filename, 'wb') as f:
+	pickle.dump((X_mushroom, y_mushroom), f)
+f.close()
 
 
