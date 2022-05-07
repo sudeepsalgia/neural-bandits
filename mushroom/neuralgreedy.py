@@ -6,10 +6,10 @@ from utils import *
 from banditreal import *
 
 
-class NeuralUCB():
+class NeuralGreedy():
 
 	def __init__(self, bandit, hidden_size=20, n_layers=2, _lambda=1.0, delta=0.01, nu=-1.0, training_window=100,
-		p=0.0, eta=0.01, B=1, epochs=1, train_every=1, throttle=1,use_cuda=False, activation_param=1, model_seed=42):
+		p=0.0, eta=0.01, B=1, eps=0.1, epochs=1, train_every=1, throttle=1,use_cuda=False, activation_param=1, model_seed=42):
 
 		# Initialize the bandit object which contains the features and the rewards
 		self.bandit = bandit
@@ -33,6 +33,9 @@ class NeuralUCB():
 
 		# upper bound on the hilbert space norm of the function
 		self.B = B
+
+		# set epsilon parameter
+		self.eps = eps
 
 		# maximum number of rewards in the training buffer
 		self.training_window = training_window
@@ -79,16 +82,16 @@ class NeuralUCB():
 
 		return (self.B + self.nu*np.sqrt(np.sum(np.log(1 + self.samp_var[:self.iteration]/(self._lambda))) + 2 * np.log(1/self.delta)))
 
-	def reset_UCB(self):
+	def reset_mu(self):
 		# Initialize the matrices to store the posterior mean and standard deviation of all arms at all times
-		self.sigma = np.empty((self.bandit.T, self.bandit.n_arms))
+		# self.sigma = np.empty((self.bandit.T, self.bandit.n_arms))
 		self.mu = np.empty((self.bandit.T, self.bandit.n_arms))
 
 		# Initialize a vector to store the posterior variances of the sampled points
-		self.samp_var = np.empty(self.bandit.T)
+		# self.samp_var = np.empty(self.bandit.T)
 
 		# Initialize a matrix to store all the UCBs of all arms at all times
-		self.upper_confidence_bounds = np.ones((self.bandit.T, self.bandit.n_arms))
+		# self.upper_confidence_bounds = np.ones((self.bandit.T, self.bandit.n_arms))
 
 		# Set the time taken by the algorithm to run to 0
 		self.time_elapsed = 0
@@ -101,54 +104,54 @@ class NeuralUCB():
 		# Initialize a vector to store the actions taken across the time horizon
 		self.actions = np.empty(self.bandit.T).astype('int')
 
-	def reset_Z_inv(self):
-		# Initialize the matrix that stores Z^{-1} = (lambda I + G^T G )^{-1}
-		self.Z_inv = np.eye(self.approximator_dim)/self._lambda
+	# def reset_Z_inv(self):
+	# 	# Initialize the matrix that stores Z^{-1} = (lambda I + G^T G )^{-1}
+	# 	self.Z_inv = np.eye(self.approximator_dim)/self._lambda
 
-	def reset_normalized_gradient(self):
-		# Initialize a matrix that stores g(a, theta)/sqrt(m) for all actions a at each time instant
-		self.norm_grad = np.zeros((self.bandit.n_arms, self.approximator_dim))
+	# def reset_normalized_gradient(self):
+	# 	# Initialize a matrix that stores g(a, theta)/sqrt(m) for all actions a at each time instant
+	# 	self.norm_grad = np.zeros((self.bandit.n_arms, self.approximator_dim))
 
 	def reset(self):
 		# Initialize all variables of interest
-		self.reset_UCB()
+		self.reset_mu()
 		self.reset_regret()
 		self.reset_actions()
-		self.reset_normalized_gradient()
-		self.reset_Z_inv()
+		# self.reset_normalized_gradient()
+		# self.reset_Z_inv()
 
 		# Set the iteration counter to zero
 		self.iteration = 0
 
-	def update_output_gradient(self):
-		# Get gradient of network prediction w.r.t network weights.
+	# def update_output_gradient(self):
+	# 	# Get gradient of network prediction w.r.t network weights.
 
-		for a in self.bandit.arms:
-			x = torch.FloatTensor(self.bandit.features[self.iteration, a].reshape(1, -1)).to(self.device)
+	# 	for a in self.bandit.arms:
+	# 		x = torch.FloatTensor(self.bandit.features[self.iteration, a].reshape(1, -1)).to(self.device)
 
-			self.model.zero_grad()
-			y = self.model(x)
-			y.backward()
+	# 		self.model.zero_grad()
+	# 		y = self.model(x)
+	# 		y.backward()
 
-			self.norm_grad[a] = torch.cat([w.grad.detach().flatten() / np.sqrt(self.hidden_size) for w in self.model.parameters() if w.requires_grad]
-				).to(self.device)
+	# 		self.norm_grad[a] = torch.cat([w.grad.detach().flatten() / np.sqrt(self.hidden_size) for w in self.model.parameters() if w.requires_grad]
+	# 			).to(self.device)
 
-	def update_confidence_bounds(self):
-		# Update confidence bounds and related quantities for all arms.
-		self.update_output_gradient()
+	# def update_confidence_bounds(self):
+	# 	# Update confidence bounds and related quantities for all arms.
+	# 	# self.update_output_gradient()
 
-		# Calcuating the posterior standard deviations
-		self.sigma[self.iteration] = np.array([np.sqrt(np.dot(self.norm_grad[a], np.dot(self.Z_inv, self.norm_grad[a].T))) for a in self.bandit.arms])
+	# 	# Calcuating the posterior standard deviations
+	# 	# self.sigma[self.iteration] = np.array([np.sqrt(np.dot(self.norm_grad[a], np.dot(self.Z_inv, self.norm_grad[a].T))) for a in self.bandit.arms])
 
-		# Update reward prediction mu
-		self.predict()
+	# 	# Update reward prediction mu
+	# 	self.predict()
 
-		# Calculate the UCBs for all actions
-		self.upper_confidence_bounds[self.iteration] = self.mu[self.iteration] + self.beta_t * self.sigma[self.iteration]
+	# 	# Calculate the UCBs for all actions
+	# 	# self.upper_confidence_bounds[self.iteration] = self.mu[self.iteration] + self.beta_t * self.sigma[self.iteration]
 
-	def update_Z_inv(self):
-		# Update the Z_inv matrix with the action chosen at a particular time
-		self.Z_inv = inv_sherman_morrison(self.norm_grad[self.action], self.Z_inv)
+	# def update_Z_inv(self):
+	# 	# Update the Z_inv matrix with the action chosen at a particular time
+	# 	self.Z_inv = inv_sherman_morrison(self.norm_grad[self.action], self.Z_inv)
 
 	def train(self):
 		# Train the NN using the action-reward pairs in the training buffer
@@ -183,18 +186,20 @@ class NeuralUCB():
 		with tqdm(total=self.bandit.T, postfix=postfix) as pbar:
 			for t in range(self.bandit.T):
 				# update confidence of all arms based on observed features at time t
-				self.update_confidence_bounds()
+				if np.random.random() < self.eps:
+					self.action = np.random.choice(self.bandit.arms)
+				else:
+					self.predict()
+					self.action = np.argmax(self.mu[self.iteration]).astype('int')
 
 				# pick action with the highest boosted estimated reward
-				# self.action = np.argmax(self.upper_confidence_bounds[self.iteration]).astype('int')
-				self.action = np.argmax(self.mu[self.iteration]).astype('int')
+				
 				self.actions[t] = self.action
-				self.samp_var[t] = self.sigma[t, self.action]**2
+				# self.samp_var[t] = self.sigma[t, self.action]**2
 
 				# train the nn
 				if t % self.train_every == 0:
 					self.train()
-					# print(self.upper_confidence_bounds[t], self.bandit.rewards[t])
 
 				# update the matrix Z_inv
 				# self.update_Z_inv()

@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import StandardScaler
+import pickle
 
 df = pd.read_csv('./datasets/telescope_data.csv')
 # print(df['class'].sample(n=10))
@@ -21,6 +22,8 @@ sc = StandardScaler()
 y = labelencoder.fit_transform(y)
 X = sc.fit_transform(X)
 
-print(np.shape(X))
-print(np.sum(y))
+filename = 'magic.pkl'
+with open(filename, 'wb') as f:
+	pickle.dump((X, y), f)
+f.close()
 

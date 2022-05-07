@@ -42,6 +42,8 @@ class ContextualBanditReal():
 				self.features[t][a][a*self.d:(a+1)*self.d] = x0
 			self.rewards[t][y[t]] = 1
 
+		# print(self.features[:3])
+
 	def _seed(self, seed=None):
 		if seed is not None:
 			np.random.seed(seed)
