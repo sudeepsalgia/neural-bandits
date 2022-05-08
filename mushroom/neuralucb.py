@@ -186,8 +186,8 @@ class NeuralUCB():
 				self.update_confidence_bounds()
 
 				# pick action with the highest boosted estimated reward
-				# self.action = np.argmax(self.upper_confidence_bounds[self.iteration]).astype('int')
-				self.action = np.argmax(self.mu[self.iteration]).astype('int')
+				self.action = np.argmax(self.upper_confidence_bounds[self.iteration]).astype('int')
+				# self.action = np.argmax(self.mu[self.iteration]).astype('int')
 				self.actions[t] = self.action
 				self.samp_var[t] = self.sigma[t, self.action]**2
 
@@ -197,7 +197,7 @@ class NeuralUCB():
 					# print(self.upper_confidence_bounds[t], self.bandit.rewards[t])
 
 				# update the matrix Z_inv
-				# self.update_Z_inv()
+				self.update_Z_inv()
 
 				# compute regret
 				self.regret[t] = self.bandit.best_rewards_oracle[t]-self.bandit.rewards[t, self.action]
