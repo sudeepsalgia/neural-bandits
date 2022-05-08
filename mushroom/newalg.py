@@ -9,7 +9,7 @@ from banditreal import *
 class NewAlg():
 
 	def __init__(self, bandit, hidden_size=20, n_layers=2, _lambda=1.0, delta=0.01, nu=-1.0, training_window=100, s_max=-1,
-		p=0.0, eta=0.01, B=1, epochs=1, train_every=1, throttle=1,use_cuda=False, activation_param=1, model_seed=42):
+		p=0.0, eta=0.01, B=1, epochs=1, train_every=1, throttle=1,use_cuda=False, activation_param=1, model_seed=42, lambda_0=1):
 
 		# Initialize the bandit object which contains the features and the rewards
 		self.bandit = bandit
@@ -33,6 +33,9 @@ class NewAlg():
 
 		# upper bound on the hilbert space norm of the function
 		self.B = B
+
+		# max variance to be used by the algorithm
+		self.lambda_0 = lambda_0
 
 		# Max number of groups/models
 		if s_max == -1:
@@ -192,8 +195,8 @@ class NewAlg():
 		# Run an episode of bandit
 
 		postfix = {'total regret': 0.0}
-		lambda_0 = 0.8 #*np.sqrt(self._lambda)     # 1.8 for mushroom, 1 for statlog, 1.5 for bank
-		t_const = lambda_0/np.sqrt(self.bandit.T)
+		# lambda_0 = 0.8 #*np.sqrt(self._lambda)     # 1.8 for mushroom, 1 for statlog, 1.5 for bank
+		t_const = self.lambda_0/np.sqrt(self.bandit.T)
 		best_idxs = [0 for _ in range(self.s_max)]
 		pts_exploited = [0 for _ in range(self.s_max)]
 		alpha_s = [np.log(self.bandit.T)*20*(4**(r+1)) for r in range(self.s_max)]
@@ -216,7 +219,7 @@ class NewAlg():
 					self.update_confidence_bounds()
 					best_idxs[self.s] = hat_A[np.argmax(self.mu[self.iteration][hat_A])]
 					
-					if np.all(self.sigma[self.iteration][hat_A] <= lambda_0*c**(-(self.s+1))): 
+					if np.all(self.sigma[self.iteration][hat_A] <= self.lambda_0*c**(-(self.s+1))): 
 						UCB_max = hat_A[np.argmax(self.upper_confidence_bounds[self.iteration][hat_A])]
 						if self.sigma[self.iteration][UCB_max] <= eta_t:
 							self.action = UCB_max
@@ -235,7 +238,7 @@ class NewAlg():
 							self.s += 1
 					else:
 						if self.s == 0 or pts_exploited[self.s] > alpha_s[self.s]:
-							large_var_pts = hat_A[self.sigma[self.iteration][hat_A] > lambda_0*c**(-(self.s+1))]
+							large_var_pts = hat_A[self.sigma[self.iteration][hat_A] > self.lambda_0*c**(-(self.s+1))]
 							self.action = np.random.choice(large_var_pts, 1)[0]
 						else:
 							self.action = best_idxs[self.s - 1]

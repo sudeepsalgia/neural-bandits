@@ -9,7 +9,7 @@ from banditreal import *
 class SupNNUCB():
 
 	def __init__(self, bandit, hidden_size=20, n_layers=2, _lambda=1.0, delta=0.01, nu=-1.0, training_window=100, s_max=-1,
-		p=0.0, eta=0.01, B=1, epochs=1, train_every=1, throttle=1,use_cuda=False, activation_param=1, model_seed=42):
+		p=0.0, eta=0.01, B=1, epochs=1, train_every=1, throttle=1,use_cuda=False, activation_param=1, model_seed=42, lambda_0=1):
 
 		# Initialize the bandit object which contains the features and the rewards
 		self.bandit = bandit
@@ -33,6 +33,9 @@ class SupNNUCB():
 
 		# upper bound on the hilbert space norm of the function
 		self.B = B
+
+		# max variance to be used by the algorithm
+		self.lambda_0 = lambda_0
 
 		# Max number of groups/models
 		if s_max == -1:
@@ -192,8 +195,8 @@ class SupNNUCB():
 		# Run an episode of bandit
 
 		postfix = {'total regret': 0.0}
-		lambda_0 = 1 #*np.sqrt(self._lambda)   # 1.8 for mushroom
-		t_const = lambda_0/(self.bandit.T)**2
+		# lambda_0 = 1 #*np.sqrt(self._lambda)   # 1.8 for mushroom
+		t_const = self.lambda_0/(self.bandit.T)**2
 
 		with tqdm(total=self.bandit.T, postfix=postfix) as pbar:
 			for t in range(self.bandit.T):
@@ -211,14 +214,14 @@ class SupNNUCB():
 						self.regret[t] = self.bandit.best_rewards_oracle[t]-self.bandit.rewards[t, self.action]
 						to_exit = True
 						self.iteration += 1
-					elif np.all(self.sigma[self.iteration][hat_A] <= lambda_0*2**(-(self.s+1))):
-						max_LCB = np.max(self.upper_confidence_bounds[self.iteration][hat_A]) - lambda_0*2**(-self.s)
+					elif np.all(self.sigma[self.iteration][hat_A] <= self.lambda_0*2**(-(self.s+1))):
+						max_LCB = np.max(self.upper_confidence_bounds[self.iteration][hat_A]) - self.lambda_0*2**(-self.s)
 						idxs_to_keep = self.upper_confidence_bounds[self.iteration][hat_A] >= max_LCB
 						if idxs_to_keep.any():
 							hat_A = hat_A[idxs_to_keep]
 						self.s += 1
 					else:
-						large_var_pts = hat_A[self.sigma[self.iteration][hat_A] > lambda_0*2**(-(self.s+1))]
+						large_var_pts = hat_A[self.sigma[self.iteration][hat_A] > self.lambda_0*2**(-(self.s+1))]
 						self.action = np.random.choice(large_var_pts, 1)[0]
 						self.iteration_idxs[self.s].append(t)
 						self.action_idxs[self.s].append(self.action)
