@@ -6,27 +6,25 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import StandardScaler
 import pickle
 
-df = pd.read_csv('./datasets/winequality-red.csv')
+df = pd.read_fwf('./datasets/yeast.data')
 
-df = df[df['quality'] > 4]
-df = df[df['quality'] < 7]
-# quals = df['quality']
-# quals[quals > 6] = 6
-# df['quality'] = quals
+df = df[df['class'].isin(['MIT', 'CYT', 'NUC', 'ME3'])]
+# print(df.head())
 
-# print(df.groupby("quality").size())
+# df = df[df['quality'] > 4]
+# df = df[df['quality'] < 7]
 
-X = df.iloc[:, :-1].values
+X = df.iloc[:, 1:-1].values
 y = df.iloc[:, -1].values
 
 labelencoder = LabelEncoder()
-mm = MinMaxScaler()
+# mm = MinMaxScaler()
 sc = StandardScaler()
 
 y = labelencoder.fit_transform(y)
-X = mm.fit_transform(X)
+X = sc.fit_transform(X)
 
-filename = './mushroom/wine.pkl'
+filename = './mushroom/yeast.pkl'
 with open(filename, 'wb') as f:
 	pickle.dump((X, y), f)
 f.close()

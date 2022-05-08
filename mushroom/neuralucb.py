@@ -215,6 +215,8 @@ class NeuralUCB():
 			mins, secs = pbar.format_interval(pbar.format_dict['elapsed']).split(':')
 			self.time_elapsed = 60*int(mins) + int(secs)
 
+		# print(self.beta_t)
+
 
 
 

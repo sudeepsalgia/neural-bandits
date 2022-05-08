@@ -7,20 +7,20 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.model_selection import train_test_split
 
-filename = 'wine.pkl'
+filename = 'yeast.pkl'
 with open(filename, 'rb') as f:
 	(X_wine, y_wine) = pickle.load(f)
 	f.close()
 
 d = np.shape(X_wine)[1]
-n_arms = 2
+n_arms = 4
 n_features = n_arms*d
 T = np.shape(X_wine)[0]
 device = torch.device('cpu')
 hidden_size = 50
-epochs = 600
+epochs = 400
 train_every = 1
-eta = 0.01
+eta = 0.1
 
 model = Model(input_size=n_features, hidden_size=hidden_size, n_layers=2).to(device)
 optimizer = torch.optim.SGD(model.parameters(), lr=eta)
@@ -42,7 +42,7 @@ for t in range(T):
 	# features[2*t+1][d:] = x0
 	# rewards[2*t + y[t]] = 1
 
-X_train, X_test, Y_train, Y_test = train_test_split(features, rewards, test_size = 0.3)
+X_train, X_test, Y_train, Y_test = train_test_split(features, rewards, test_size = 0.2)
 
 x_train = torch.FloatTensor(X_train).to(device)
 y_train = torch.FloatTensor(Y_train).squeeze().to(device)

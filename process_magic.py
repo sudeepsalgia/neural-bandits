@@ -4,9 +4,14 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import StandardScaler
 import pickle
+from scipy import stats
 
 df = pd.read_csv('./datasets/telescope_data.csv')
 # print(df['class'].sample(n=10))
+
+z = np.abs(stats.zscore(df.iloc[:, 1:-1]))
+
+df = df[(z < 3).all(axis=1)]
 
 df1 = df[df['class'] == 'g'].sample(n=1000)
 df0 = df[df['class'] == 'h'].sample(n=1000)
@@ -22,7 +27,7 @@ sc = StandardScaler()
 y = labelencoder.fit_transform(y)
 X = sc.fit_transform(X)
 
-filename = 'magic.pkl'
+filename = './mushroom/magic.pkl'
 with open(filename, 'wb') as f:
 	pickle.dump((X, y), f)
 f.close()

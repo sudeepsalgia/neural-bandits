@@ -192,7 +192,7 @@ class NewAlg():
 		# Run an episode of bandit
 
 		postfix = {'total regret': 0.0}
-		lambda_0 = 1.8 #*np.sqrt(self._lambda)     # 1.8 for mushroom
+		lambda_0 = 0.8 #*np.sqrt(self._lambda)     # 1.8 for mushroom, 1 for statlog, 1.5 for bank
 		t_const = lambda_0/np.sqrt(self.bandit.T)
 		best_idxs = [0 for _ in range(self.s_max)]
 		pts_exploited = [0 for _ in range(self.s_max)]
@@ -204,7 +204,7 @@ class NewAlg():
 				hat_A = np.arange(self.bandit.n_arms)
 				to_exit = False
 				self.s = 0
-				eta_t = t_const
+				eta_t = t_const # min(0.2, np.sqrt(1/(t+1))) #
 				c = 2
 
 				while not(to_exit):
@@ -222,7 +222,7 @@ class NewAlg():
 							self.action = UCB_max
 							self.s += 1
 							self.iteration_idxs[self.s].append(t)
-							self.action_idxs[s0].append(self.action)
+							self.action_idxs[self.s].append(self.action)
 							if len(self.iteration_idxs[self.s]) % self.train_every == 0:
 								self.train()
 							self.update_Z_inv()
@@ -260,9 +260,9 @@ class NewAlg():
 			mins, secs = pbar.format_interval(pbar.format_dict['elapsed']).split(':')
 			self.time_elapsed = 60*int(mins) + int(secs)
 
-		lens = [len(x) for x in self.iteration_idxs]
-		print(lens)
-		print(self.sigma[-5:])
+		# lens = [len(x) for x in self.iteration_idxs]
+		# print(lens)
+		# print(self.sigma[-5:])
 
 
 

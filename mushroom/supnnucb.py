@@ -192,7 +192,7 @@ class SupNNUCB():
 		# Run an episode of bandit
 
 		postfix = {'total regret': 0.0}
-		lambda_0 = 1.8 #*np.sqrt(self._lambda)
+		lambda_0 = 1 #*np.sqrt(self._lambda)   # 1.8 for mushroom
 		t_const = lambda_0/(self.bandit.T)**2
 
 		with tqdm(total=self.bandit.T, postfix=postfix) as pbar:
@@ -213,7 +213,9 @@ class SupNNUCB():
 						self.iteration += 1
 					elif np.all(self.sigma[self.iteration][hat_A] <= lambda_0*2**(-(self.s+1))):
 						max_LCB = np.max(self.upper_confidence_bounds[self.iteration][hat_A]) - lambda_0*2**(-self.s)
-						hat_A = hat_A[self.upper_confidence_bounds[self.iteration][hat_A] >= max_LCB]
+						idxs_to_keep = self.upper_confidence_bounds[self.iteration][hat_A] >= max_LCB
+						if idxs_to_keep.any():
+							hat_A = hat_A[idxs_to_keep]
 						self.s += 1
 					else:
 						large_var_pts = hat_A[self.sigma[self.iteration][hat_A] > lambda_0*2**(-(self.s+1))]
