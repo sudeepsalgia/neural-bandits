@@ -29,7 +29,7 @@ delta = 0.1
 # Neural Network parameters
 hidden_size = 50
 epochs = 200
-train_every = 1
+train_every = 10
 use_cuda = False
 B = 0.5
 s = 1
