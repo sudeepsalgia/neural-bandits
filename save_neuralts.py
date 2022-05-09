@@ -16,7 +16,7 @@ from neuralts import *
 # Change function name on line 59
 # Change B on line 33
 
-time_horizon = 1000
+time_horizon = 2000
 n_arms = 4
 n_features = 10
 noise_std = 0.1
@@ -92,7 +92,7 @@ for fn in fns:
 		time_taken[n] = model.time_elapsed
 
 	save_tuple = (settings, regrets, time_taken)
-	filename = './' + settings['algo'] + '_' + settings['reward_func'] + '.pkl'
+	filename = './' + settings['algo'] + '_' + settings['reward_func'] + '_2000.pkl'
 	with open(filename, 'wb') as f:
 		pickle.dump(save_tuple, f)
 	f.close()

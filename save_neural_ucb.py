@@ -15,7 +15,7 @@ from batchedneuralucb import *
 # Change function name on line 59
 # Change B on line 33
 
-time_horizon = 1000
+time_horizon = 2000
 n_arms = 4
 n_features = 10
 noise_std = 0.1
@@ -32,7 +32,7 @@ hidden_size = 20
 epochs = 200
 train_every = 1
 use_cuda = False
-B = 6
+B = 8
 s = 1
 
 ### mean reward function
@@ -42,9 +42,9 @@ a /= np.linalg.norm(a, ord=2)
 # A = np.random.normal(scale=0.5, size=(n_features,n_features))
 
 # 2 <a, x>^2
-# reward_func = lambda x: 4*np.dot(a, x)**2
+reward_func = lambda x: 4*np.dot(a, x)**2
 # reward_func = lambda x: np.linalg.norm(np.dot(A, x), ord=2)
-reward_func = lambda x: 4*np.sin(np.dot(a, x))**2
+# reward_func = lambda x: 4*np.sin(np.dot(a, x))**2
 
 bandit = ContextualBandit(time_horizon, n_arms, n_features, reward_func, noise_std=noise_std, seed=bandit_seed)
 
@@ -60,7 +60,7 @@ settings = {'T': time_horizon,
 			'epochs': epochs,
 			'train_every': train_every,
 			'a_vec': a,
-			'reward_func': 'cosine',
+			'reward_func': 'inner_product_squared',
 			'B': B,
 			'activation function': 'ReLU ' + str(s),
 			'delta': delta,
@@ -83,7 +83,7 @@ for n in range(n_sim):
 	time_taken[n] = model.time_elapsed
 
 save_tuple = (settings, regrets, time_taken)
-filename = './' + settings['algo'] + '_' + settings['reward_func'] + '.pkl'
+filename = './' + settings['algo'] + '_' + settings['reward_func'] + '_2000.pkl'
 with open(filename, 'wb') as f:
 	pickle.dump(save_tuple, f)
 f.close()
