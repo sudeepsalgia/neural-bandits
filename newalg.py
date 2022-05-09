@@ -192,7 +192,7 @@ class NewAlg():
 		# Run an episode of bandit
 
 		postfix = {'total regret': 0.0}
-		lambda_0 = 0.55 #*np.sqrt(self._lambda)
+		lambda_0 = 0.55 #*np.sqrt(self._lambda) # 0.55 for lambda = 0.5
 		t_const = lambda_0/np.sqrt(self.bandit.T)
 		best_idxs = [0 for _ in range(self.s_max)]
 		pts_exploited = [0 for _ in range(self.s_max)]

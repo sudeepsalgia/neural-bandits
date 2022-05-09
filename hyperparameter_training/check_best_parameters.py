@@ -7,7 +7,7 @@ lambda_vec = [0.05, 0.1, 0.5]
 # lambda_vec = [0.1, 0.5, 1]
 
 
-reward_func = 'inner_product_squared'
+reward_func = 'xAAx'
 # algo = 'SupNNUCB'
 
 # for eta, _lambda in itertools.product(eta_vec, lambda_vec):
@@ -31,4 +31,5 @@ for a in algos:
 	f.close()
 
 	regrets = saved_tuple[1]
-	print(a, np.mean(regrets[:, -1]), np.std(regrets[:, -1]) )
+	# print(a, np.mean(regrets[:, -1]), np.std(regrets[:, -1]) )
+	print(a, regrets[:, -1], '\n')
