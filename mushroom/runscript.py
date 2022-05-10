@@ -48,17 +48,17 @@ regrets = np.empty((n_sim, T))
 
 for i in range(n_sim):
 	bandit.reset_rewards()
-	model = NeuralUCB(bandit,
+	model = NewAlg(bandit,
 					  hidden_size=hidden_size,
 					  _lambda=0.5,
 					  delta=0.1,
 					  nu=confidence_scaling_factor,
 					  training_window=T,
 					  p=p,
-					  eta=0.001, B=2,
+					  eta=0.01, B=2,
 					  epochs=epochs,
 					  train_every=train_every,
-					  use_cuda=use_cuda
+					  use_cuda=use_cuda, lambda_0=1.8
 					 )
 
 	# model = BatchedNeuralUCB(bandit,
