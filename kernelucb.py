@@ -76,6 +76,10 @@ class KernelUCB():
 		# Set the iteration counter to zero
 		self.iteration = 0
 
+	def ntk(self, x, y):
+		u = np.dot(x, y)
+		return (u*(np.pi - np.arccos(u)) + np.sqrt(1-u**2))/np.pi
+
 
 	def update_confidence_bounds(self):
 
@@ -89,12 +93,18 @@ class KernelUCB():
 			x_hist = self.bandit.features[iterations_so_far, actions_so_far]
 			y_hist = self.bandit.rewards[iterations_so_far, actions_so_far].squeeze()
 
+			# print(np.shape(self.K_inv), np.shape(x_hist), self.iteration)
+			# u = np.dot(x_hist, self.bandit.features[self.iteration][0])
+			# print(np.shape(u))
+
 			for a in self.bandit.arms:
 				x_t = self.bandit.features[self.iteration][a]
 				# print(np.shape(x_hist), np.shape(x_t))
 				x_diff = x_hist - x_t
 				# print(np.shape(x_diff))
+				# k_vec = self.ntk(x_hist, x_t) 
 				k_vec = np.exp(-np.sum(x_diff**2, axis=1)/(2*(self.l**2)))
+				# print(np.shape(k_vec))
 				# print(np.shape(k_vec))
 				self.sigma[self.iteration][a] = np.sqrt(1 - np.dot(k_vec, np.dot(self.K_inv, np.transpose(k_vec))))
 				self.mu[self.iteration][a] = np.dot(k_vec, np.dot(self.K_inv, np.transpose(y_hist)))
@@ -105,7 +115,7 @@ class KernelUCB():
 	def update_K_inv(self):
 
 		if self.iteration == 0:
-			np.array([[1/(1 + self._lambda)]])
+			self.K_inv = np.array([[1/(1 + self._lambda)]])
 		else:
 			iterations_so_far = range(0, self.iteration)
 			actions_so_far = self.actions[0:self.iteration]
@@ -113,14 +123,18 @@ class KernelUCB():
 			x_hist = self.bandit.features[iterations_so_far, actions_so_far]
 
 			x_diff = x_hist - self.bandit.features[self.iteration][self.action]
-			k_vec = np.exp(-np.sum(x_diff**2, axis=1)/(2*(self.l**2)))
+			k_vec =  np.exp(-np.sum(x_diff**2, axis=1)/(2*(self.l**2))) 
+			# k_vec = self.ntk(x_hist, self.bandit.features[self.iteration][self.action])
+			# print(k_vec)
 			b_K = np.array([np.dot(k_vec, self.K_inv)])
 			K_22 = 1/(1 + self._lambda - np.dot(b_K, np.transpose(k_vec)))
 			K_11 = self.K_inv + K_22*np.dot(np.transpose(b_K), b_K)
 			K_21 = -K_22*b_K
+			# print(np.shape(b_K), K_11.shape, K_22.shape)
 			top_row = np.append(K_11, np.reshape(np.transpose(K_21), (self.iteration, 1)), axis=1)
 			bottom_row = np.array([np.append(K_21, K_22)])
-			K_inv = np.append(top_row, bottom_row, axis=0)
+			self.K_inv = np.append(top_row, bottom_row, axis=0)
+			# print(np.shape(K_inv), self.iteration)
 
 
 	def run(self):
@@ -129,7 +143,7 @@ class KernelUCB():
 		postfix = {'total regret': 0.0}
 
 		with tqdm(total=self.bandit.T, postfix=postfix) as pbar:
-			for t in range(1, self.bandit.T):
+			for t in range(0, self.bandit.T):
 				# update confidence of all arms based on observed features at time t
 				self.update_confidence_bounds()
 
@@ -143,6 +157,10 @@ class KernelUCB():
 
 				# increment counter
 				self.iteration += 1
+
+				# if self.iteration % 10 == 0:
+					# print(self.mu[self.iteration], self.sigma[self.iteration])
+					# print(np.shape(self.K_inv))
 
 				# compute regret
 				self.regret[t] = self.bandit.best_rewards_oracle[t]-self.bandit.rewards[t, self.action]

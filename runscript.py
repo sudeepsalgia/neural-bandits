@@ -45,19 +45,19 @@ regrets = np.empty((n_sim, T))
 
 for i in range(n_sim):
 	bandit.reset_rewards()
-	model = NeuralUCB(bandit,
-					  hidden_size=hidden_size,
-					  _lambda=0.5,
-					  delta=0.1,
-					  nu=confidence_scaling_factor,
-					  training_window=T,
-					  p=p,
-					  eta=0.01, B=8,
-					  epochs=epochs,
-					  train_every=train_every,
-					  use_cuda=use_cuda,
-					  model_seed=100
-					 )
+	# model = NeuralUCB(bandit,
+	# 				  hidden_size=hidden_size,
+	# 				  _lambda=0.5,
+	# 				  delta=0.1,
+	# 				  nu=confidence_scaling_factor,
+	# 				  training_window=T,
+	# 				  p=p,
+	# 				  eta=0.01, B=8,
+	# 				  epochs=epochs,
+	# 				  train_every=train_every,
+	# 				  use_cuda=use_cuda,
+	# 				  model_seed=100
+	# 				 )
 
 	# model = LinUCB(bandit,
 	# 				  _lambda=0.5,
@@ -65,11 +65,11 @@ for i in range(n_sim):
 	# 				  nu=confidence_scaling_factor, B=8
 	# 				 )
 
-	# model = KernelUCB(bandit,
-	# 				  _lambda=0.5,
-	# 				  delta=0.1, l=10,
-	# 				  nu=confidence_scaling_factor, B=8
-	# 				 )
+	model = KernelUCB(bandit,
+					  _lambda=0.5,
+					  delta=0.1, l=0.1,
+					  nu=confidence_scaling_factor, B=8
+					 )
 
 	# model = BatchedNeuralUCB(bandit,
 	# 				  hidden_size=hidden_size,

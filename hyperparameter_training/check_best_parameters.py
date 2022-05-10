@@ -21,15 +21,15 @@ reward_func = 'xAAx'
 # 	print(eta, _lambda, np.mean(regrets[:, -1]))
 # 	print(saved_tuple[0]['B'])
 
-algos = ['NeuralUCB', 'SupNNUCB', 'NeuralTS', 'NewAlg']
+algos = ['NeuralUCB', 'SupNNUCB', 'NeuralTS', 'NewAlg', 'LinUCB', 'KernelUCB']
 
 
 for a in algos:
-	filename = '../' + a + '_' + reward_func + '.pkl'
+	filename = '../' + a + '_' + reward_func + '_2000.pkl'
 	with open(filename, 'rb') as f:
 		saved_tuple = pickle.load(f)
 	f.close()
 
 	regrets = saved_tuple[1]
-	# print(a, np.mean(regrets[:, -1]), np.std(regrets[:, -1]) )
-	print(a, regrets[:, -1], '\n')
+	print(a, np.mean(regrets[:, -1]), np.std(regrets[:, -1]) )
+	# print(a, regrets[:, -1], '\n')
