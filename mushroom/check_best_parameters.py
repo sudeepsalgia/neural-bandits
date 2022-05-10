@@ -7,7 +7,7 @@ lambda_vec = [0.05, 0.1, 0.5]
 # lambda_vec = [0.1, 0.5, 1]
 
 
-reward_func = 'bank'
+reward_func = 'mushroom'
 algo = 'NewAlg'
 
 for eta, _lambda in itertools.product(eta_vec, lambda_vec):

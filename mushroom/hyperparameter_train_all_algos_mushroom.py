@@ -20,8 +20,8 @@ time_horizon = 2000
 n_arms = 2
 # n_features = 10
 noise_std = 0.1
-nu = 0
-n_sim = 5
+nu = 0.1
+n_sim = 1
 bandit_seed = 42
 nn_seeds = (np.random.random(n_sim)*1000).astype('int')
 reward_seeds = (np.random.random(n_sim)*1000).astype('int')
@@ -41,9 +41,9 @@ with open(filename, 'rb') as f:
 	(X, y) = pickle.load(f)
 	f.close()
 
-algos = ['NeuralTS', 'NewAlg']
-eta_vec = [1e-3, 1e-2, 1e-1]
-lambda_vec = [0.05, 0.1, 0.5]
+algos = ['NeuralUCB', 'SupNNUCB', 'NeuralTS', 'NewAlg']
+eta_vec = [0.01]# [1e-3, 1e-2, 1e-1]
+lambda_vec = [0.5]# [0.05, 0.1, 0.5]
 
 bandit = ContextualBanditReal(n_arms=n_arms, X=X, Y=y, noise_std=noise_std, seed=bandit_seed)
 
@@ -89,14 +89,14 @@ for algo in algos:
 
 
 			model.run()
-			regrets[n] = np.cumsum(model.regret[:T])
+			regrets[n] = np.cumsum(model.regret[:time_horizon])
 			time_taken[n] = model.time_elapsed
 
-		save_tuple = (settings, regrets, time_taken)
-		filename = './Hyperparamter_' + settings['reward_func'] + '_' + settings['algo'] + '_' + str(int(-np.log10(eta))) + '_' + str(int(100*_lambda)) + '.pkl'
-		with open(filename, 'wb') as f:
-			pickle.dump(save_tuple, f)
-		f.close()
+		# save_tuple = (settings, regrets, time_taken)
+		# filename = './Hyperparamter_' + settings['reward_func'] + '_' + settings['algo'] + '_' + str(int(-np.log10(eta))) + '_' + str(int(100*_lambda)) + '.pkl'
+		# with open(filename, 'wb') as f:
+		# 	pickle.dump(save_tuple, f)
+		# f.close()
 
 		print(np.mean(regrets[:, -1]))
 
