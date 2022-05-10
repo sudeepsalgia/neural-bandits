@@ -13,7 +13,7 @@ T = int(2e3)
 n_arms = 2
 noise_std = 0.1
 
-confidence_scaling_factor = 0 #noise_std
+confidence_scaling_factor = noise_std
 
 n_sim = 1
 
@@ -22,11 +22,11 @@ np.random.seed(SEED*2)
 
 p = 0
 hidden_size = 50
-epochs = 600
+epochs = 200
 train_every = 5
 use_cuda = False 
 
-filename = 'magic.pkl'
+filename = 'mushroom.pkl'
 with open(filename, 'rb') as f:
 	(X, y) = pickle.load(f)
 	f.close()
@@ -55,10 +55,10 @@ for i in range(n_sim):
 					  nu=confidence_scaling_factor,
 					  training_window=T,
 					  p=p,
-					  eta=0.01, B=0.5,
+					  eta=0.001, B=2,
 					  epochs=epochs,
 					  train_every=train_every,
-					  use_cuda=use_cuda,
+					  use_cuda=use_cuda
 					 )
 
 	# model = BatchedNeuralUCB(bandit,

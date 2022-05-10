@@ -33,7 +33,7 @@ hidden_size = 50
 epochs = 200
 train_every = 10
 use_cuda = False
-B = 0.5
+B = 2
 s = 1
 
 filename = 'mushroom.pkl'
@@ -41,8 +41,8 @@ with open(filename, 'rb') as f:
 	(X, y) = pickle.load(f)
 	f.close()
 
-algos = ['NeuralUCB', 'SupNNUCB', 'NeuralTS', 'NewAlg']
-eta_vec = [0.01]# [1e-3, 1e-2, 1e-1]
+algos = ['SupNNUCB', 'NeuralTS', 'NeuralUCB',  'NewAlg'] #
+eta_vec = [0.001]# [1e-3, 1e-2, 1e-1]
 lambda_vec = [0.5]# [0.05, 0.1, 0.5]
 
 bandit = ContextualBanditReal(n_arms=n_arms, X=X, Y=y, noise_std=noise_std, seed=bandit_seed)
