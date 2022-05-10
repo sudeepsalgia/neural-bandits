@@ -1,12 +1,12 @@
 import numpy as np
 import itertools
 import pickle
-from bandit import *
+from banditreal import *
 from neuralucb import *
 from supnnucb import *
 from newalg import *
 from neuralts import *
-from batchedneuralucb import *
+# from batchedneuralucb import *
 
 # Check all settings before running
 

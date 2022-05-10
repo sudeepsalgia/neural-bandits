@@ -234,7 +234,9 @@ class NewAlg():
 							to_exit = True
 						else:
 							max_LCB = np.max(self.mu[self.iteration][hat_A] - self.beta_t*self.sigma[self.iteration][hat_A])
-							hat_A = hat_A[self.upper_confidence_bounds[self.iteration][hat_A] >= max_LCB]
+							idxs_to_keep = self.upper_confidence_bounds[self.iteration][hat_A] >= max_LCB
+							if idxs_to_keep.any():
+								hat_A = hat_A[idxs_to_keep]
 							self.s += 1
 					else:
 						if self.s == 0 or pts_exploited[self.s] > alpha_s[self.s]:
