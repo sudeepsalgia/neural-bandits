@@ -207,7 +207,7 @@ class NewAlg():
 				hat_A = np.arange(self.bandit.n_arms)
 				to_exit = False
 				self.s = 0
-				eta_t = 0.2/np.sqrt(t+1) # min(0.2, np.sqrt(1/(t+1))) #
+				eta_t = t_const # min(0.2, np.sqrt(1/(t+1))) #0.2/np.sqrt(t+1)
 				c = 2
 
 				while not(to_exit):

@@ -55,7 +55,7 @@ for i in range(n_sim):
 					  nu=confidence_scaling_factor,
 					  training_window=T,
 					  p=p,
-					  eta=0.1, B=2,
+					  eta=0.01, B=2, lambda_0=1.5,
 					  epochs=epochs,
 					  train_every=train_every,
 					  use_cuda=use_cuda,
