@@ -10,6 +10,7 @@ from neuralts import *
 from neuralgreedy import *
 from linucb import *
 from kernelucb import *
+from batchednewalg import *
 sns.set()
 
 T = int(2e3)
@@ -30,13 +31,17 @@ epochs = 200
 train_every = 1
 use_cuda = False
 
+# batch_param = [5, 10, 20, 40, 80, 160, 320]
+batch_param = [1.2, 3, 3, 40, 80, 160, 320]
+q = 3
+
 ### mean reward function
 a = np.random.randn(n_features)
 a /= np.linalg.norm(a, ord=2)
-reward_func = lambda x: 4*np.dot(a, x)**2
+# reward_func = lambda x: 4*np.dot(a, x)**2
 # A = np.random.normal(scale=0.5, size=(n_features, n_features))
 # reward_func = lambda x: np.linalg.norm(np.dot(A, x), ord=2)
-# reward_func = lambda x: 4*np.sin(np.dot(a, x))**2
+reward_func = lambda x: 4*np.sin(np.dot(a, x))**2
 
 bandit = ContextualBandit(T, n_arms, n_features, reward_func, noise_std=noise_std, seed=SEED)
 
@@ -45,7 +50,7 @@ regrets = np.empty((n_sim, T))
 
 for i in range(n_sim):
 	bandit.reset_rewards()
-	# model = NeuralUCB(bandit,
+	# model = NewAlg(bandit,
 	# 				  hidden_size=hidden_size,
 	# 				  _lambda=0.5,
 	# 				  delta=0.1,
@@ -56,7 +61,6 @@ for i in range(n_sim):
 	# 				  epochs=epochs,
 	# 				  train_every=train_every,
 	# 				  use_cuda=use_cuda,
-	# 				  model_seed=100
 	# 				 )
 
 	# model = LinUCB(bandit,
@@ -65,22 +69,35 @@ for i in range(n_sim):
 	# 				  nu=confidence_scaling_factor, B=8
 	# 				 )
 
-	model = KernelUCB(bandit,
+	# model = KernelUCB(bandit,
+	# 				  _lambda=0.5,
+	# 				  delta=0.1, l=0.1,
+	# 				  nu=confidence_scaling_factor, B=8
+	# 				 )
+
+	model = BatchedNeuralUCB(bandit,
+					  hidden_size=hidden_size,
 					  _lambda=0.5,
-					  delta=0.1, l=0.1,
-					  nu=confidence_scaling_factor, B=8
+					  delta=0.1,
+					  nu=confidence_scaling_factor,
+					  training_window=2000, batch_type='adaptive',
+					  p=p,
+					  eta=0.01, B=8,
+					  epochs=epochs,
+					  batch_param = q,
+					  use_cuda=use_cuda
 					 )
 
-	# model = BatchedNeuralUCB(bandit,
+	# model = BatchedNewAlg(bandit,
 	# 				  hidden_size=hidden_size,
 	# 				  _lambda=0.5,
 	# 				  delta=0.1,
 	# 				  nu=confidence_scaling_factor,
-	# 				  training_window=1000,
+	# 				  training_window=2000, batch_type='adaptive',
 	# 				  p=p,
-	# 				  eta=0.01,
+	# 				  eta=0.01, B=8, lambda_0=0.55,
 	# 				  epochs=epochs,
-	# 				  batch_param = 250,
+	# 				  batch_param = batch_param,
 	# 				  use_cuda=use_cuda
 	# 				 )
 

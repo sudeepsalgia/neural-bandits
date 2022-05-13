@@ -74,9 +74,9 @@ class BatchedNeuralUCB():
 				self.train_every = int(np.floor(self.bandit.T/self.n_batches))
 		elif self.batch_type == 'adaptive':
 			if batch_param == 0:
-				self.q = 2
+				self.batch_param = 2
 			else:
-				self.q = batch_param
+				self.batch_param = batch_param
 
 		# reset and initialize all variables of interest to be used while the algorithm runs
 		self.reset()
@@ -137,6 +137,9 @@ class BatchedNeuralUCB():
 		# Set the iteration counter to zero
 		self.iteration = 0
 
+		# Set the time taken by the algorithm to run to 0
+		self.time_elapsed = 0
+
 		# Set the last training instant to zero
 		self.last_train = 0
 
@@ -177,7 +180,7 @@ class BatchedNeuralUCB():
 		if self.batch_type == 'fixed':
 			train = (t % self.train_every == 0)
 		elif self.batch_type == 'adaptive':
-			train = (np.sum(np.log(1 + self.samp_var[(self.last_train+1):t])) > np.log(batch_param))
+			train = (np.sum(np.log(1 + self.samp_var[(self.last_train):t]/(self._lambda))) > np.log(self.batch_param))
 
 		return train
 
