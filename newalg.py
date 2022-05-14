@@ -82,7 +82,7 @@ class NewAlg():
 	def beta_t(self):
 		# Calculate the beta_t factor
 
-		return (self.B + 2*self.nu*np.sqrt(np.log(1/self.delta)))
+		return (self.B + self.nu*np.sqrt(2*np.log(1/self.delta)/self._lambda))
 
 	def reset_UCB(self):
 		# Initialize the matrices to store the posterior mean and standard deviation of all arms at all times
@@ -142,8 +142,8 @@ class NewAlg():
 			y = self.models[-1](x)
 			y.backward()
 
-			self.norm_grad[a] = torch.cat([w.grad.detach().flatten() / np.sqrt(self.hidden_size) for w in self.models[-1].parameters() if w.requires_grad]
-				).to(self.device)
+			self.norm_grad[a] = torch.cat([w.grad.detach().flatten()  for w in self.models[-1].parameters() if w.requires_grad]
+				).to(self.device) # / np.sqrt(self.hidden_size)
 
 	def update_confidence_bounds(self):
 		# Update confidence bounds and related quantities for all arms.
@@ -192,8 +192,8 @@ class NewAlg():
 		# Run an episode of bandit
 
 		postfix = {'total regret': 0.0}
-		lambda_0 = 0.55 #*np.sqrt(self._lambda) # 0.55 for lambda = 0.5
-		t_const = lambda_0/np.sqrt(self.bandit.T)
+		lambda_0 = 1.25 #*np.sqrt(self._lambda) # 0.55 for lambda = 0.5
+		t_const = lambda_0/np.sqrt(2*self.bandit.T)
 		best_idxs = [0 for _ in range(self.s_max)]
 		pts_exploited = [0 for _ in range(self.s_max)]
 		alpha_s = [np.log(self.bandit.T)*20*(4**(r+1)) for r in range(self.s_max)]
@@ -204,7 +204,7 @@ class NewAlg():
 				hat_A = np.arange(self.bandit.n_arms)
 				to_exit = False
 				self.s = 0
-				eta_t = t_const
+				eta_t = t_const #0.2/np.sqrt(t+1) #
 				c = 2
 
 				while not(to_exit):
@@ -214,7 +214,8 @@ class NewAlg():
 					# 	c0 = 1
 					# update confidence of all arms based on observed features at time t
 					self.update_confidence_bounds()
-					best_idxs[self.s] = hat_A[np.argmax(self.mu[self.iteration][hat_A])]
+					if self.mu[self.iteration].size > 0:
+						best_idxs[self.s] = hat_A[np.argmax(self.mu[self.iteration][hat_A])]
 					
 					if np.all(self.sigma[self.iteration][hat_A] <= lambda_0*c**(-(self.s+1))): 
 						UCB_max = hat_A[np.argmax(self.upper_confidence_bounds[self.iteration][hat_A])]
@@ -222,7 +223,7 @@ class NewAlg():
 							self.action = UCB_max
 							self.s += 1
 							self.iteration_idxs[self.s].append(t)
-							self.action_idxs[s0].append(self.action)
+							self.action_idxs[self.s].append(self.action)
 							if len(self.iteration_idxs[self.s]) % self.train_every == 0:
 								self.train()
 							self.update_Z_inv()
@@ -231,7 +232,11 @@ class NewAlg():
 							to_exit = True
 						else:
 							max_LCB = np.max(self.mu[self.iteration][hat_A] - self.beta_t*self.sigma[self.iteration][hat_A])
-							hat_A = hat_A[self.upper_confidence_bounds[self.iteration][hat_A] >= max_LCB]
+							idxs_to_keep = self.upper_confidence_bounds[self.iteration][hat_A] >= max_LCB
+							if idxs_to_keep.any():
+								hat_A = hat_A[idxs_to_keep]
+							else:
+								print(max_LCB, self.upper_confidence_bounds[self.iteration][hat_A])
 							self.s += 1
 					else:
 						if self.s == 0 or pts_exploited[self.s] > alpha_s[self.s]:
@@ -259,6 +264,14 @@ class NewAlg():
 
 			mins, secs = pbar.format_interval(pbar.format_dict['elapsed']).split(':')
 			self.time_elapsed = 60*int(mins) + int(secs)
+
+		lens = [len(x) for x in self.iteration_idxs]
+		print(lens)
+		print(self.sigma[-5:])
+		# print(self.mu[-5:])
+		# print(self.bandit.rewards[-5:])
+		# print(pts_exploited)
+		# print(alpha_s)
 
 
 
