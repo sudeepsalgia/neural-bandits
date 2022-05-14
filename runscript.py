@@ -27,7 +27,7 @@ np.random.seed(SEED*2)
 
 p = 0
 hidden_size = 20
-epochs = 200
+epochs = 100
 train_every = 1
 use_cuda = False
 
@@ -38,10 +38,10 @@ q = 3
 ### mean reward function
 a = np.random.randn(n_features)
 a /= np.linalg.norm(a, ord=2)
-# reward_func = lambda x: 4*np.dot(a, x)**2
+reward_func = lambda x: 4*np.dot(a, x)**2
 # A = np.random.normal(scale=0.5, size=(n_features, n_features))
 # reward_func = lambda x: np.linalg.norm(np.dot(A, x), ord=2)
-reward_func = lambda x: 4*np.sin(np.dot(a, x))**2
+# reward_func = lambda x: 4*np.sin(np.dot(a, x))**2
 
 bandit = ContextualBandit(T, n_arms, n_features, reward_func, noise_std=noise_std, seed=SEED)
 
@@ -50,18 +50,20 @@ regrets = np.empty((n_sim, T))
 
 for i in range(n_sim):
 	bandit.reset_rewards()
-	# model = NewAlg(bandit,
-	# 				  hidden_size=hidden_size,
-	# 				  _lambda=0.5,
-	# 				  delta=0.1,
-	# 				  nu=confidence_scaling_factor,
-	# 				  training_window=T,
-	# 				  p=p,
-	# 				  eta=0.01, B=8,
-	# 				  epochs=epochs,
-	# 				  train_every=train_every,
-	# 				  use_cuda=use_cuda,
-	# 				 )
+	model = NeuralUCB(bandit,
+					  hidden_size=hidden_size,
+					  _lambda=1,
+					  delta=0.1,
+					  nu=confidence_scaling_factor,
+					  training_window=T,
+					  p=p,
+					  eta=0.01, B=4,
+					  epochs=epochs,
+					  train_every=train_every,
+					  use_cuda=use_cuda,
+					  activation_param=1,
+					  # model_seed=100
+					 )
 
 	# model = LinUCB(bandit,
 	# 				  _lambda=0.5,
@@ -75,18 +77,18 @@ for i in range(n_sim):
 	# 				  nu=confidence_scaling_factor, B=8
 	# 				 )
 
-	model = BatchedNeuralUCB(bandit,
-					  hidden_size=hidden_size,
-					  _lambda=0.5,
-					  delta=0.1,
-					  nu=confidence_scaling_factor,
-					  training_window=2000, batch_type='adaptive',
-					  p=p,
-					  eta=0.01, B=8,
-					  epochs=epochs,
-					  batch_param = q,
-					  use_cuda=use_cuda
-					 )
+	# model = BatchedNeuralUCB(bandit,
+	# 				  hidden_size=hidden_size,
+	# 				  _lambda=0.5,
+	# 				  delta=0.1,
+	# 				  nu=confidence_scaling_factor,
+	# 				  training_window=2000, batch_type='adaptive',
+	# 				  p=p,
+	# 				  eta=0.01, B=8,
+	# 				  epochs=epochs,
+	# 				  batch_param = q,
+	# 				  use_cuda=use_cuda
+	# 				 )
 
 	# model = BatchedNewAlg(bandit,
 	# 				  hidden_size=hidden_size,
