@@ -29,7 +29,7 @@ _lambda = 0.5
 
 # Neural Network parameters
 hidden_size = 30
-epochs = 200
+epochs = 100
 train_every = 1
 use_cuda = False
 B = 8

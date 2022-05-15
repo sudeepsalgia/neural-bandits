@@ -25,18 +25,18 @@ n_sim = 15
 bandit_seed = 42
 nn_seeds = (np.random.random(n_sim)*1000).astype('int')
 delta = 0.1
-eta = 0.02
+eta = 0.015
 _lambda = 0.5
 
 # Neural Network parameters
 hidden_size = 30
-epochs = 200
+epochs = 100
 train_every = 1
 use_cuda = False
 B = 8
 s = 2
 
-fns = ['xAAx', 'inner_product_squared', 'cosine']
+fns = ['inner_product_squared', 'cosine'] #'xAAx',
 
 for fn in fns:
 	if fn == 'xAAx':
