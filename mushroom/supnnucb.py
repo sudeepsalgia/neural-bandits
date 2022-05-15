@@ -85,7 +85,7 @@ class SupNNUCB():
 	def beta_t(self):
 		# Calculate the beta_t factor
 
-		return (self.B/np.sqrt(self._lambda) + 2*self.nu*np.sqrt(np.log(1/self.delta)))
+		return (self.B/np.sqrt(self._lambda) + self.nu*np.sqrt(2*np.log(1/self.delta)/self._lambda))
 
 	def reset_UCB(self):
 		# Initialize the matrices to store the posterior mean and standard deviation of all arms at all times

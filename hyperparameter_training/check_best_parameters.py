@@ -7,7 +7,7 @@ lambda_vec = [0.05, 0.1, 0.5]
 # lambda_vec = [0.1, 0.5, 1]
 
 
-reward_func = 'cosine'
+reward_func = 'xAAx'
 # algo = 'SupNNUCB'
 
 # for eta, _lambda in itertools.product(eta_vec, lambda_vec):
@@ -21,11 +21,11 @@ reward_func = 'cosine'
 # 	print(eta, _lambda, np.mean(regrets[:, -1]))
 # 	print(saved_tuple[0]['B'])
 
-algos = ['NeuralUCB', 'SupNNUCB', 'NeuralTS', 'NewAlg', 'LinUCB', 'KernelUCB']
+algos = ['NeuralUCB', 'SupNNUCB', 'NeuralTS', 'NewAlg'] #'LinUCB', 'KernelUCB']
 
 
 for a in algos:
-	filename = '../' + a + '_' + reward_func + '_2000.pkl'
+	filename = '../old results/' + a + '_' + reward_func + '_2000.pkl'
 	with open(filename, 'rb') as f:
 		saved_tuple = pickle.load(f)
 	f.close()

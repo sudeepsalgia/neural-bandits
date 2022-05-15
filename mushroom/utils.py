@@ -10,8 +10,8 @@ def inv_sherman_morrison(u, A_inv):
     A_inv -= np.outer(Au, Au)/(1+np.dot(u.T, Au))
     return A_inv
 
-def relu_s(x, s):
-    return torch.relu(x)**s
+def relu_s(x, s, c):
+    return c*(torch.relu(x)**s)
 
 
 class Model(nn.Module):
@@ -28,6 +28,8 @@ class Model(nn.Module):
         super(Model, self).__init__()
 
         self.n_layers = n_layers
+        c_sigma = 2/np.prod([(2*k + 1) for k in range(s)])
+        self.scale_cnst = np.sqrt(c_sigma)  #/hidden_size
 
         if self.n_layers == 1:
             self.layers = [nn.Linear(input_size, 1)]
@@ -36,7 +38,7 @@ class Model(nn.Module):
             self.layers = [nn.Linear(size[i], size[i+1], bias=False) for i in range(self.n_layers)]
             torch.manual_seed(seed)
             for l in self.layers:
-                nn.init.normal_(l.weight, mean=0.0, std=np.sqrt(2/hidden_size))
+                nn.init.normal_(l.weight, mean=0.0, std=np.sqrt(c_sigma/hidden_size))
         self.layers = nn.ModuleList(self.layers)
 
         # dropout layer
@@ -48,7 +50,7 @@ class Model(nn.Module):
 
     def forward(self, x):
         for i in range(self.n_layers-1):
-            x = self.dropout(self.activation(self.layers[i](x), self.s))
+            x = self.dropout(self.activation(self.layers[i](x), self.s, self.scale_cnst))
         x = self.layers[-1](x)
         return x
 

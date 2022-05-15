@@ -29,7 +29,7 @@ class Model(nn.Module):
 
         self.n_layers = n_layers
         c_sigma = 2/np.prod([(2*k + 1) for k in range(s)])
-        self.scale_cnst = np.sqrt(c_sigma/hidden_size)
+        self.scale_cnst = np.sqrt(c_sigma) #/hidden_size
 
         if self.n_layers == 1:
             self.layers = [nn.Linear(input_size, 1)]
@@ -38,7 +38,7 @@ class Model(nn.Module):
             self.layers = [nn.Linear(size[i], size[i+1], bias=False) for i in range(self.n_layers)]
             torch.manual_seed(seed)
             for l in self.layers:
-                nn.init.normal_(l.weight, mean=0.0, std=1)
+                nn.init.normal_(l.weight, mean=0.0, std=np.sqrt(1/hidden_size))
         self.layers = nn.ModuleList(self.layers)
 
         # dropout layer

@@ -85,7 +85,7 @@ class NewAlg():
 	def beta_t(self):
 		# Calculate the beta_t factor
 
-		return (self.B + 2*self.nu*np.sqrt(np.log(1/self.delta)))
+		return (self.B + self.nu*np.sqrt(2*np.log(1/self.delta)/self._lambda))
 
 	def reset_UCB(self):
 		# Initialize the matrices to store the posterior mean and standard deviation of all arms at all times
@@ -145,8 +145,8 @@ class NewAlg():
 			y = self.models[-1](x)
 			y.backward()
 
-			self.norm_grad[a] = torch.cat([w.grad.detach().flatten() / np.sqrt(self.hidden_size) for w in self.models[-1].parameters() if w.requires_grad]
-				).to(self.device)
+			self.norm_grad[a] = torch.cat([w.grad.detach().flatten() for w in self.models[-1].parameters() if w.requires_grad]
+				).to(self.device) #/ np.sqrt(self.hidden_size)
 
 	def update_confidence_bounds(self):
 		# Update confidence bounds and related quantities for all arms.
@@ -265,9 +265,9 @@ class NewAlg():
 			mins, secs = pbar.format_interval(pbar.format_dict['elapsed']).split(':')
 			self.time_elapsed = 60*int(mins) + int(secs)
 
-		# lens = [len(x) for x in self.iteration_idxs]
-		# print(lens)
-		# print(self.sigma[-5:])
+		lens = [len(x) for x in self.iteration_idxs]
+		print(lens)
+		print(self.sigma[-5:])
 
 
 
