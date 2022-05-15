@@ -27,15 +27,15 @@ reward_seeds = (np.random.random(n_sim)*1000).astype('int')
 delta = 0.1
 eta = 0.01
 _lambda = 0.5
-lambda_0 = 1 # 1.8 for mushroom, 1 for shuttle
+lambda_0 = 0.45 # 1.8 for mushroom, 1 for shuttle (s=1),  0.45 for shuttle (s=2)
 
 # Neural Network parameters
-hidden_size = 50
+hidden_size = 80
 epochs = 400  # 200 for mushroom, 400 for shuttle
 train_every = 5
 use_cuda = False
 B = 2
-s = 1
+s = 2
 
 filename = 'shuttle.pkl'
 with open(filename, 'rb') as f:
@@ -78,7 +78,7 @@ for n in range(n_sim):
 	time_taken[n] = model.time_elapsed
 
 save_tuple = (settings, regrets, time_taken)
-filename = './' + settings['algo'] + '_' + settings['reward_func'] + '.pkl'
+filename = './' + settings['algo'] + '_' + settings['reward_func'] + '_2.pkl'
 with open(filename, 'wb') as f:
 	pickle.dump(save_tuple, f)
 f.close()

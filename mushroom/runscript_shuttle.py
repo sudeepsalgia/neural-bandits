@@ -21,7 +21,7 @@ SEED = 42
 np.random.seed(SEED*2)
 
 p = 0
-hidden_size = 50
+hidden_size = 80
 epochs = 400
 train_every = 10
 use_cuda = False 
@@ -48,7 +48,7 @@ regrets = np.empty((n_sim, T))
 
 for i in range(n_sim):
 	bandit.reset_rewards()
-	model = NewAlg(bandit,
+	model = NeuralUCB(bandit,
 					  hidden_size=hidden_size,
 					  _lambda=0.5,
 					  delta=0.1,
@@ -58,7 +58,9 @@ for i in range(n_sim):
 					  eta=0.01, B=2,
 					  epochs=epochs,
 					  train_every=train_every,
-					  use_cuda=use_cuda,
+					  use_cuda=use_cuda, #lambda_0=0.45,  # 0.45
+					  activation_param=2,
+					  model_seed=100
 					 )
 
 	# model = BatchedNeuralUCB(bandit,

@@ -228,7 +228,7 @@ class NewAlg():
 							self.action_idxs[self.s].append(self.action)
 							if len(self.iteration_idxs[self.s]) % self.train_every == 0:
 								self.train()
-							self.update_Z_inv()
+							self.update_Z_inv()  
 							self.regret[t] = self.bandit.best_rewards_oracle[t]-self.bandit.rewards[t, self.action]
 							self.iteration += 1
 							to_exit = True
@@ -249,7 +249,7 @@ class NewAlg():
 						self.action_idxs[self.s].append(self.action)
 						if len(self.iteration_idxs[self.s]) % self.train_every == 0:
 							self.train()
-						self.update_Z_inv()
+						self.update_Z_inv()  
 						self.regret[t] = self.bandit.best_rewards_oracle[t]-self.bandit.rewards[t, self.action]
 						self.iteration += 1
 						to_exit = True

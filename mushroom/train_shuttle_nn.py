@@ -21,7 +21,7 @@ epochs = 400
 train_every = 10
 eta = 0.01
 
-model = Model(input_size=n_features, hidden_size=hidden_size, n_layers=2).to(device)
+model = Model(input_size=n_features, hidden_size=hidden_size, n_layers=2, s=1).to(device)
 optimizer = torch.optim.SGD(model.parameters(), lr=eta)
 
 new_idxs = np.random.permutation(T)
