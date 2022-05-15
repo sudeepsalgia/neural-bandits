@@ -24,16 +24,16 @@ n_sim = 15
 bandit_seed = 42
 nn_seeds = (np.random.random(n_sim)*1000).astype('int')
 delta = 0.1
-eta = 0.01
+eta = 0.1
 _lambda = 0.5
 
 # Neural Network parameters
-hidden_size = 20
+hidden_size = 30
 epochs = 200
 train_every = 1
 use_cuda = False
 B = 8
-s = 1
+s = 2
 
 fns = ['xAAx', 'inner_product_squared', 'cosine']
 
@@ -91,7 +91,7 @@ for fn in fns:
 		time_taken[n] = model.time_elapsed
 
 	save_tuple = (settings, regrets, time_taken)
-	filename = './' + settings['algo'] + '_' + settings['reward_func'] + '_2000.pkl'
+	filename = './' + settings['algo'] + '_' + settings['reward_func'] + 's'+  str(s)+ '.pkl'
 	with open(filename, 'wb') as f:
 		pickle.dump(save_tuple, f)
 	f.close()

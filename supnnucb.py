@@ -192,7 +192,7 @@ class SupNNUCB():
 		# Run an episode of bandit
 
 		postfix = {'total regret': 0.0}
-		lambda_0 = 0.55 #*np.sqrt(self._lambda)
+		lambda_0 = 0.75 #*np.sqrt(self._lambda)
 		t_const = lambda_0/(self.bandit.T)**2
 
 		with tqdm(total=self.bandit.T, postfix=postfix) as pbar:

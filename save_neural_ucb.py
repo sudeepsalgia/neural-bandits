@@ -6,6 +6,7 @@ from neuralucb import *
 from supnnucb import *
 from newalg import *
 from batchedneuralucb import *
+from neuralts import *
 
 # Check all settings before running
 
@@ -24,68 +25,76 @@ n_sim = 15
 bandit_seed = 42
 nn_seeds = (np.random.random(n_sim)*1000).astype('int')
 delta = 0.1
-eta = 0.01
+eta = 0.02
 _lambda = 0.5
 
 # Neural Network parameters
-hidden_size = 20
+hidden_size = 30
 epochs = 200
 train_every = 1
 use_cuda = False
 B = 8
-s = 1
+s = 2
 
-### mean reward function
-np.random.seed(bandit_seed*2)
-a = np.random.randn(n_features)
-a /= np.linalg.norm(a, ord=2)
-# A = np.random.normal(scale=0.5, size=(n_features,n_features))
+fns = ['xAAx', 'inner_product_squared', 'cosine']
 
-# 2 <a, x>^2
-reward_func = lambda x: 4*np.dot(a, x)**2
-# reward_func = lambda x: np.linalg.norm(np.dot(A, x), ord=2)
-# reward_func = lambda x: 4*np.sin(np.dot(a, x))**2
+for fn in fns:
+	if fn == 'xAAx':
+		np.random.seed(bandit_seed*2)
+		A = np.random.normal(scale=0.5, size=(n_features,n_features))
+		reward_func = lambda x: np.linalg.norm(np.dot(A, x), ord=2)
+		a = A
+	elif fn == 'inner_product_squared':
+		np.random.seed(bandit_seed*2)
+		a = np.random.randn(n_features)
+		a /= np.linalg.norm(a, ord=2)
+		reward_func = lambda x: 4*np.dot(a, x)**2
+	else:
+		np.random.seed(bandit_seed*2)
+		a = np.random.randn(n_features)
+		a /= np.linalg.norm(a, ord=2)
+		reward_func = lambda x: 4*np.sin(np.dot(a, x))**2
 
-bandit = ContextualBandit(time_horizon, n_arms, n_features, reward_func, noise_std=noise_std, seed=bandit_seed)
+	bandit = ContextualBandit(time_horizon, n_arms, n_features, reward_func, noise_std=noise_std, seed=bandit_seed)
 
-settings = {'T': time_horizon,
-			'n_arms': n_arms,
-			'n_features': n_features,
-			'noise std dev': noise_std,
-			'nu': nu,
-			'n_sim': n_sim,
-			'bandit seed': bandit_seed,
-			'nn seeds': nn_seeds,
-			'hidden_size': hidden_size,
-			'epochs': epochs,
-			'train_every': train_every,
-			'a_vec': a,
-			'reward_func': 'inner_product_squared',
-			'B': B,
-			'activation function': 'ReLU ' + str(s),
-			'delta': delta,
-			'algo': 'NeuralUCB',
-			'eta': eta,
-			'lambda': _lambda }                                        
-
-
-regrets = np.empty((n_sim, time_horizon))
-time_taken = np.empty(n_sim)
+	settings = {'T': time_horizon,
+				'n_arms': n_arms,
+				'n_features': n_features,
+				'noise std dev': noise_std,
+				'nu': nu,
+				'n_sim': n_sim,
+				'bandit seed': bandit_seed,
+				'nn seeds': nn_seeds,
+				'hidden_size': hidden_size,
+				'epochs': epochs,
+				'train_every': train_every,
+				'a_vec': a,
+				'reward_func': fn,
+				'B': B,
+				'activation function': 'ReLU ' + str(s),
+				'delta': delta,
+				'algo': 'NeuralUCB',
+				'eta': eta,
+				'lambda': _lambda }                                        
 
 
-for n in range(n_sim):
-	bandit.reset_rewards()
-	model = NeuralUCB(bandit, hidden_size=hidden_size, _lambda=_lambda, delta=delta, nu=nu, training_window=time_horizon,
-					  eta=eta, B=B, epochs=epochs, train_every=train_every, use_cuda=use_cuda, activation_param=s, model_seed=nn_seeds[n])
+	regrets = np.empty((n_sim, time_horizon))
+	time_taken = np.empty(n_sim)
 
-	model.run()
-	regrets[n] = np.cumsum(model.regret)
-	time_taken[n] = model.time_elapsed
 
-save_tuple = (settings, regrets, time_taken)
-filename = './' + settings['algo'] + '_' + settings['reward_func'] + '_2000.pkl'
-with open(filename, 'wb') as f:
-	pickle.dump(save_tuple, f)
-f.close()
+	for n in range(n_sim):
+		bandit.reset_rewards()
+		model = NeuralUCB(bandit, hidden_size=hidden_size, _lambda=_lambda, delta=delta, nu=nu, training_window=time_horizon,
+						  eta=eta, B=B, epochs=epochs, train_every=train_every, use_cuda=use_cuda, activation_param=s, model_seed=nn_seeds[n])
+
+		model.run()
+		regrets[n] = np.cumsum(model.regret)
+		time_taken[n] = model.time_elapsed
+
+	save_tuple = (settings, regrets, time_taken)
+	filename = './' + settings['algo'] + '_' + settings['reward_func'] + 's'+  str(s)+ '.pkl'
+	with open(filename, 'wb') as f:
+		pickle.dump(save_tuple, f)
+	f.close()
 
 
