@@ -26,7 +26,7 @@ bandit_seed = 42
 nn_seeds = (np.random.random(n_sim)*1000).astype('int')
 delta = 0.1
 eta = 0.015
-_lambda = 5
+_lambda = 0.5
 
 # Neural Network parameters
 hidden_size = 30
