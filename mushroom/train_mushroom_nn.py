@@ -16,10 +16,10 @@ d = np.shape(X_mushroom)[1]
 n_features = 2*d
 T = 2000
 device = torch.device('cpu')
-hidden_size = 50
+hidden_size = 80
 epochs = 200
 train_every = 5
-eta = 0.01
+eta = 0.005
 
 model = Model(input_size=n_features, hidden_size=hidden_size, n_layers=2, s=1).to(device)
 optimizer = torch.optim.SGD(model.parameters(), lr=eta)

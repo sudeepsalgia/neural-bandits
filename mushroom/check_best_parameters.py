@@ -7,7 +7,7 @@ lambda_vec = [0.05, 0.1, 0.5]
 # lambda_vec = [0.1, 0.5, 1]
 
 
-reward_func = 'shuttle'
+reward_func = 'mushroom'
 # algo = 'NeuralUCB'
 
 # print(algo)
