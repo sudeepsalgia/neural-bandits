@@ -21,9 +21,9 @@ SEED = 42
 np.random.seed(SEED*2)
 
 p = 0
-hidden_size = 80
+hidden_size = 50
 epochs = 400
-train_every = 10
+train_every = 1
 use_cuda = False 
 
 filename = 'shuttle.pkl'
@@ -58,8 +58,8 @@ for i in range(n_sim):
 					  eta=0.01, B=2,
 					  epochs=epochs,
 					  train_every=train_every,
-					  use_cuda=use_cuda, lambda_0=0.4,  # 0.45
-					  activation_param=2,
+					  use_cuda=use_cuda, lambda_0=0.45,  # 0.45
+					  activation_param=1,
 					  model_seed=123
 					 )
 
