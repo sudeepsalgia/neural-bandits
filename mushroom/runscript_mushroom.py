@@ -6,6 +6,7 @@ from neuralucb import *
 from newalg import *
 from supnnucb import *
 from neuralts import *
+from linucb import *
 sns.set()
 import pickle 
 
@@ -21,7 +22,7 @@ SEED = 42
 np.random.seed(SEED*2)
 
 p = 0
-hidden_size = 80
+hidden_size = 50
 epochs = 200
 train_every = 5
 use_cuda = False 
@@ -48,18 +49,19 @@ regrets = np.empty((n_sim, T))
 
 for i in range(n_sim):
 	bandit.reset_rewards()
-	model = NewAlg(bandit,
+	# model = LinUCB(bandit, _lambda=0.5, delta=0.1, nu=confidence_scaling_factor, B=2)
+	model = NeuralUCB(bandit,
 					  hidden_size=hidden_size,
-					  _lambda=1,
+					  _lambda=0.5,
 					  delta=0.1,
-					  nu=confidence_scaling_factor,
+					  nu=0, #confidence_scaling_factor,
 					  training_window=T,
 					  p=p,
-					  eta=0.005, B=2,
+					  eta=0.01, B=2,
 					  epochs=epochs,
 					  train_every=train_every,
-					  use_cuda=use_cuda, lambda_0=1.8,
-					  activation_param=2, model_seed=100
+					  use_cuda=use_cuda, #lambda_0=1.8,
+					  activation_param=1, model_seed=100
 					 )
 
 	# model = BatchedNeuralUCB(bandit,

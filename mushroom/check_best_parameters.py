@@ -8,7 +8,7 @@ lambda_vec = [0.05, 0.1, 0.5]
 
 
 reward_func = 'mushroom'
-# algo = 'NeuralUCB'
+algo = 'NeuralUCB'
 
 # print(algo)
 
@@ -25,15 +25,22 @@ reward_func = 'mushroom'
 
 # print(saved_tuple[0]['epochs'])
 
-algos = ['NeuralUCB', 'SupNNUCB', 'NeuralTS', 'NewAlg']
+# algos = ['NeuralUCB',  'NeuralTS', 'NewAlg'] #'SupNNUCB',
 
 
-for a in algos:
-	filename = './' + a + '_' + reward_func + '.pkl'
-	with open(filename, 'rb') as f:
-		saved_tuple = pickle.load(f)
-	f.close()
+# for a in algos:
+# 	filename = './' + a + '_' + reward_func + '.pkl'
+# 	with open(filename, 'rb') as f:
+# 		saved_tuple = pickle.load(f)
+# 	f.close()
 
-	regrets = saved_tuple[1]
-	print(a, np.mean(regrets[:, -1]), np.std(regrets[:, -1]) )
+# 	regrets = saved_tuple[1]
+# 	print(a, np.mean(regrets[:, -1]), np.std(regrets[:, -1]) )
 	# print(a, regrets[:, -1], '\n')
+
+filename = './' + algo + '_' + reward_func + '.pkl'
+with open(filename, 'rb') as f:
+	saved_tuple = pickle.load(f)
+f.close()
+regrets = saved_tuple[1]
+print(regrets[:, -1])
