@@ -22,7 +22,7 @@ n_arms = 4
 n_features = 10
 noise_std = 0.1
 nu = 0.1
-n_sim = 15
+n_sim = 30
 bandit_seed = 42
 nn_seeds = (np.random.random(n_sim)*1000).astype('int')
 delta = 0.1
@@ -31,7 +31,7 @@ _lambda = 0.5
 
 # Neural Network parameters
 hidden_size = 30
-epochs = 100
+epochs = 200
 use_cuda = False
 B = 8
 s = 2
@@ -39,7 +39,7 @@ s = 2
 B1 = [2,10,20, 40, 80, 160,320, 640]
 B2 = [2*x for x in B1]
 
-fns = [ 'inner_product_squared', 'cosine'] # 'xAAx',
+fns = [ 'xAAx' ] #, 'inner_product_squared', 'cosine'
 
 
 for fn in fns:
@@ -48,7 +48,7 @@ for fn in fns:
 		A = np.random.normal(scale=0.5, size=(n_features,n_features))
 		reward_func = lambda x: np.linalg.norm(np.dot(A, x), ord=2)
 		a = A
-		eta = 0.01
+		eta = 0.3
 		_lambda = 0.05
 		lambda_0 = 1.3
 	elif fn == 'inner_product_squared':

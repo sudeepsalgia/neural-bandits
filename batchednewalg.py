@@ -78,7 +78,7 @@ class BatchedNewAlg():
 				batch_param = np.ones(s_max)
 		elif self.batch_type == 'adaptive':
 			if batch_param == 0:
-				batch_param = 1*np.ones(s_max)
+				batch_param = 2*np.ones(s_max)
 		self.batch_param = batch_param
 
 		# reset and initialize all variables of interest to be used while the algorithm runs
@@ -160,8 +160,8 @@ class BatchedNewAlg():
 			y = self.models[-1](x)
 			y.backward()
 
-			self.norm_grad[a] = torch.cat([w.grad.detach().flatten() / np.sqrt(self.hidden_size) for w in self.models[-1].parameters() if w.requires_grad]
-				).to(self.device)
+			self.norm_grad[a] = torch.cat([w.grad.detach().flatten()  for w in self.models[-1].parameters() if w.requires_grad]
+				).to(self.device) #/ np.sqrt(self.hidden_size)
 
 	def update_confidence_bounds(self):
 		# Update confidence bounds and related quantities for all arms.
@@ -293,6 +293,10 @@ class BatchedNewAlg():
 
 			mins, secs = pbar.format_interval(pbar.format_dict['elapsed']).split(':')
 			self.time_elapsed = 60*int(mins) + int(secs)
+
+			# lens = [len(x) for x in self.iteration_idxs]
+			# print(lens)
+			# print(self.sigma[-5:])
 
 
 

@@ -29,11 +29,11 @@ eta = 0.01
 _lambda = 0.5
 
 # Neural Network parameters
-hidden_size = 20
-epochs = 200
+hidden_size = 30
+epochs = 100
 use_cuda = False
 B = 8
-s = 1
+s = 2
 
 fns = ['xAAx', 'inner_product_squared', 'cosine'] 
 
@@ -44,20 +44,29 @@ for fn in fns:
 		A = np.random.normal(scale=0.5, size=(n_features,n_features))
 		reward_func = lambda x: np.linalg.norm(np.dot(A, x), ord=2)
 		a = A
+		B = 4
+		eta = 0.01
+		_lambda = 5
 	elif fn == 'inner_product_squared':
 		np.random.seed(bandit_seed*2)
 		a = np.random.randn(n_features)
 		a /= np.linalg.norm(a, ord=2)
 		reward_func = lambda x: 4*np.dot(a, x)**2
+		eta = 0.01
+		_lambda = 0.5
+		B = 8
 	else:
 		np.random.seed(bandit_seed*2)
 		a = np.random.randn(n_features)
 		a /= np.linalg.norm(a, ord=2)
 		reward_func = lambda x: 4*np.sin(np.dot(a, x))**2
+		eta = 0.01
+		_lambda = 0.5
+		B = 8
 
 	bandit = ContextualBandit(time_horizon, n_arms, n_features, reward_func, noise_std=noise_std, seed=bandit_seed)
 
-	for batch_param in [1.2, 1.5, 2, 3, 4]:
+	for batch_param in [1.5, 2, 3, 4]:
 
 		settings = {'T': time_horizon,
 					'n_arms': n_arms,
@@ -96,7 +105,7 @@ for fn in fns:
 			time_taken[n] = model.time_elapsed
 
 		save_tuple = (settings, regrets, time_taken)
-		filename = './' + settings['algo'] + '_' + settings['reward_func'] + '_' + str(int(settings['batch_param']*10)) + '_2000.pkl'
+		filename = './' + settings['algo'] + '_' + settings['reward_func'] + '_' + str(int(settings['batch_param']*10)) + '_2000_s2.pkl'
 		with open(filename, 'wb') as f:
 			pickle.dump(save_tuple, f)
 			f.close()

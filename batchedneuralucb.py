@@ -153,8 +153,8 @@ class BatchedNeuralUCB():
 			y = self.model(x)
 			y.backward()
 
-			self.norm_grad[a] = torch.cat([w.grad.detach().flatten() / np.sqrt(self.hidden_size) for w in self.model.parameters() if w.requires_grad]
-				).to(self.device)
+			self.norm_grad[a] = torch.cat([w.grad.detach().flatten()  for w in self.model.parameters() if w.requires_grad]
+				).to(self.device) #/ np.sqrt(self.hidden_size)
 
 	def update_confidence_bounds(self, inv_Z=None):
 		# Update confidence bounds and related quantities for all arms.
