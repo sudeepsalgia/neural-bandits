@@ -143,7 +143,7 @@ class NewAlg():
 			y.backward()
 
 			self.norm_grad[a] = torch.cat([w.grad.detach().flatten()  for w in self.models[-1].parameters() if w.requires_grad]
-				).to(self.device) # / np.sqrt(self.hidden_size)
+				).to(self.device) #  / np.sqrt(self.hidden_size)
 
 	def update_confidence_bounds(self):
 		# Update confidence bounds and related quantities for all arms.
@@ -192,7 +192,7 @@ class NewAlg():
 		# Run an episode of bandit
 
 		postfix = {'total regret': 0.0}
-		lambda_0 = 0.75 #*np.sqrt(self._lambda) # 0.55 for lambda = 0.5, 0.8 for s=2, 1.8 for s = 1
+		lambda_0 = 1.3 #*np.sqrt(self._lambda) # 0.55 for lambda = 0.5, 0.8 for s=2, 1.8 for s = 1
 		t_const = lambda_0/np.sqrt(2*self.bandit.T)
 		best_idxs = [0 for _ in range(self.s_max)]
 		pts_exploited = [0 for _ in range(self.s_max)]

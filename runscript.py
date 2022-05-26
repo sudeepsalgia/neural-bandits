@@ -27,8 +27,8 @@ np.random.seed(SEED*2)
 
 p = 0
 hidden_size = 30
-epochs = 100
-train_every = 1
+epochs = 200
+train_every = 5
 use_cuda = False
 
 # batch_param = [5, 10, 20, 40, 80, 160, 320]
@@ -36,11 +36,11 @@ batch_param = [1.2, 3, 3, 40, 80, 160, 320]
 q = 3
 
 ### mean reward function
-a = np.random.randn(n_features)
-a /= np.linalg.norm(a, ord=2)
-reward_func = lambda x: 4*np.dot(a, x)**2
-# A = np.random.normal(scale=0.5, size=(n_features, n_features))
-# reward_func = lambda x: np.linalg.norm(np.dot(A, x), ord=2)
+# a = np.random.randn(n_features)
+# a /= np.linalg.norm(a, ord=2)
+# reward_func = lambda x: 4*np.dot(a, x)**2
+A = np.random.normal(scale=0.5, size=(n_features, n_features))
+reward_func = lambda x: np.linalg.norm(np.dot(A, x), ord=2)
 # reward_func = lambda x: 4*np.sin(np.dot(a, x))**2
 
 bandit = ContextualBandit(T, n_arms, n_features, reward_func, noise_std=noise_std, seed=SEED)
@@ -52,17 +52,17 @@ for i in range(n_sim):
 	bandit.reset_rewards()
 	model = NewAlg(bandit,
 					  hidden_size=hidden_size,
-					  _lambda=0.5,
+					  _lambda=0.05,
 					  delta=0.1,
 					  nu=confidence_scaling_factor,
 					  training_window=T,
 					  p=p,
-					  eta=0.1, B=8,
+					  eta=0.3, B=8,
 					  epochs=epochs,
 					  train_every=train_every,
 					  use_cuda=use_cuda,
 					  activation_param=2,
-					  model_seed=169
+					  model_seed=100
 					 )
 
 	# model = LinUCB(bandit,
