@@ -91,7 +91,7 @@ class BatchedNeuralUCB():
 	def beta_t(self):
 		# Calculate the beta_t factor
 
-		return (self.B + self.nu*np.sqrt(np.sum(np.log(1 + self.samp_var[:self.last_train]/(self._lambda))) + 2 * np.log(1/self.delta)))
+		return (2*self.B + self.nu*np.sqrt(np.sum(np.log(1 + self.samp_var[:self.last_train]/(self._lambda))) + 2 * np.log(1/self.delta)))
 
 	def reset_UCB(self):
 		# Initialize the matrices to store the posterior mean and standard deviation of all arms at all times

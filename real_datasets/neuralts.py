@@ -6,7 +6,7 @@ from utils import *
 from banditreal import *
 
 
-class NeuralUCB():
+class NeuralTS():
 
 	def __init__(self, bandit, hidden_size=20, n_layers=2, _lambda=1.0, delta=0.01, nu=-1.0, training_window=100,
 		p=0.0, eta=0.01, B=1, epochs=1, train_every=1, throttle=1,use_cuda=False, activation_param=1, model_seed=42):
@@ -77,7 +77,7 @@ class NeuralUCB():
 	def beta_t(self):
 		# Calculate the beta_t factor
 
-		return (self.B + self.nu*np.sqrt(np.sum(np.log(1 + self.samp_var[:self.iteration]/(self._lambda))) + 2 * np.log(1/self.delta)))
+		return (2*self.B + self.nu*np.sqrt(np.sum(np.log(1 + self.samp_var[:self.iteration]/(self._lambda))) + 2 * np.log(1/self.delta)))
 
 	def reset_UCB(self):
 		# Initialize the matrices to store the posterior mean and standard deviation of all arms at all times
@@ -88,7 +88,7 @@ class NeuralUCB():
 		self.samp_var = np.empty(self.bandit.T)
 
 		# Initialize a matrix to store all the UCBs of all arms at all times
-		self.upper_confidence_bounds = np.ones((self.bandit.T, self.bandit.n_arms))
+		self.ts_samples = np.ones((self.bandit.T, self.bandit.n_arms))
 
 		# Set the time taken by the algorithm to run to 0
 		self.time_elapsed = 0
@@ -144,7 +144,7 @@ class NeuralUCB():
 		self.predict()
 
 		# Calculate the UCBs for all actions
-		self.upper_confidence_bounds[self.iteration] = self.mu[self.iteration] + self.beta_t * self.sigma[self.iteration]
+		self.ts_samples[self.iteration] = np.random.normal(loc=self.mu[self.iteration], scale=self.beta_t * self.sigma[self.iteration])
 
 	def update_Z_inv(self):
 		# Update the Z_inv matrix with the action chosen at a particular time
@@ -186,15 +186,13 @@ class NeuralUCB():
 				self.update_confidence_bounds()
 
 				# pick action with the highest boosted estimated reward
-				self.action = np.argmax(self.upper_confidence_bounds[self.iteration]).astype('int')
-				# self.action = np.argmax(self.mu[self.iteration]).astype('int')
+				self.action = np.argmax(self.ts_samples[self.iteration]).astype('int')
 				self.actions[t] = self.action
 				self.samp_var[t] = self.sigma[t, self.action]**2
 
 				# train the nn
 				if t % self.train_every == 0:
 					self.train()
-					# print(self.upper_confidence_bounds[t], self.bandit.rewards[t])
 
 				# update the matrix Z_inv
 				self.update_Z_inv()
@@ -214,10 +212,6 @@ class NeuralUCB():
 
 			mins, secs = pbar.format_interval(pbar.format_dict['elapsed']).split(':')
 			self.time_elapsed = 60*int(mins) + int(secs)
-
-		# print(self.beta_t)
-		# print(self.mu[-10:])
-		# print(self.bandit.rewards[-10:])
 
 
 

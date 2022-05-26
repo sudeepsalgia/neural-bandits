@@ -6,7 +6,7 @@ from utils import *
 from bandit import *
 
 
-class BatchedNewAlg():
+class BatchedNeuralGCB():
 
 	def __init__(self, bandit, hidden_size=20, n_layers=2, _lambda=1.0, delta=0.01, nu=-1.0, training_window=100, s_max=-1, lambda_0=1,
 		p=0.0, eta=0.01, B=1, epochs=1, batch_type='fixed', batch_param=0, throttle=1,use_cuda=False, activation_param=1, model_seed=42):
@@ -94,7 +94,7 @@ class BatchedNewAlg():
 	def beta_t(self):
 		# Calculate the beta_t factor
 
-		return (self.B + 2*self.nu*np.sqrt(np.log(1/self.delta)))
+		return (2*self.B + self.nu*np.sqrt((2.0/self._lambda)*np.log(1/self.delta)))
 
 	def reset_UCB(self):
 		# Initialize the matrices to store the posterior mean and standard deviation of all arms at all times

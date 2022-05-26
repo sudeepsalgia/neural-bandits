@@ -6,10 +6,10 @@ from utils import *
 from banditreal import *
 
 
-class BatchedNewAlg():
+class NeuralGCB():
 
-	def __init__(self, bandit, hidden_size=20, n_layers=2, _lambda=1.0, delta=0.01, nu=-1.0, training_window=100, s_max=-1, lambda_0=1,
-		p=0.0, eta=0.01, B=1, epochs=1, batch_type='fixed', batch_param=0, throttle=1,use_cuda=False, activation_param=1, model_seed=42):
+	def __init__(self, bandit, hidden_size=20, n_layers=2, _lambda=1.0, delta=0.01, nu=-1.0, training_window=100, s_max=-1,
+		p=0.0, eta=0.01, B=1, epochs=1, train_every=1, throttle=1,use_cuda=False, activation_param=1, model_seed=42, lambda_0=1):
 
 		# Initialize the bandit object which contains the features and the rewards
 		self.bandit = bandit
@@ -34,7 +34,7 @@ class BatchedNewAlg():
 		# upper bound on the hilbert space norm of the function
 		self.B = B
 
-		# upper bound on the hilbert space norm of the function
+		# max variance to be used by the algorithm
 		self.lambda_0 = lambda_0
 
 		# Max number of groups/models
@@ -69,17 +69,8 @@ class BatchedNewAlg():
 		# Set the throttle for the progress bar
 		self.throttle = throttle
 
-		# set the batch size and type
-		# if batch type is fixed, batch_param denotes the number of batches and if batch type is fixed batch_param denotes the  
-		# threshold for the ratio of determinants
-		self.batch_type = batch_type
-		if self.batch_type == 'fixed':
-			if batch_param == 0:
-				batch_param = np.ones(s_max)
-		elif self.batch_type == 'adaptive':
-			if batch_param == 0:
-				batch_param = 2*np.ones(s_max)
-		self.batch_param = batch_param
+		# delay in feedback
+		self.train_every = train_every
 
 		# reset and initialize all variables of interest to be used while the algorithm runs
 		self.reset()
@@ -94,7 +85,7 @@ class BatchedNewAlg():
 	def beta_t(self):
 		# Calculate the beta_t factor
 
-		return (self.B + 2*self.nu*np.sqrt(np.log(1/self.delta)))
+		return (2*self.B + self.nu*np.sqrt((2.0/self._lambda)*np.log(1/self.delta))
 
 	def reset_UCB(self):
 		# Initialize the matrices to store the posterior mean and standard deviation of all arms at all times
@@ -141,14 +132,8 @@ class BatchedNewAlg():
 		self.iteration_idxs = [[] for _ in range(self.s_max)]
 		self.action_idxs = [[] for _ in range(self.s_max)]
 
-		# Initialize variable to store the posterior variances of the sampled points
-		self.samp_var = [[] for _ in range(self.s_max)]
-
 		# Set the time taken by the algorithm to run to 0
 		self.time_elapsed = 0
-
-		# Set the last training instant to zero
-		self.last_train = [0 for _ in range(self.s_max)]
 
 	def update_output_gradient(self):
 		# Get gradient of network prediction w.r.t network weights. Use the dummy model to obtain the weights
@@ -160,8 +145,8 @@ class BatchedNewAlg():
 			y = self.models[-1](x)
 			y.backward()
 
-			self.norm_grad[a] = torch.cat([w.grad.detach().flatten()   for w in self.models[-1].parameters() if w.requires_grad]
-				).to(self.device) # / np.sqrt(self.hidden_size)
+			self.norm_grad[a] = torch.cat([w.grad.detach().flatten() for w in self.models[-1].parameters() if w.requires_grad]
+				).to(self.device) #/ np.sqrt(self.hidden_size)
 
 	def update_confidence_bounds(self):
 		# Update confidence bounds and related quantities for all arms.
@@ -179,16 +164,6 @@ class BatchedNewAlg():
 	def update_Z_inv(self):
 		# Update the Z_inv matrix with the action chosen at a particular time
 		self.Z_inv[self.s] = inv_sherman_morrison(self.norm_grad[self.action], self.Z_inv[self.s])
-
-	def to_train(self, tot_pts):
-		# Decide whether the neural network should be trained at the current iteration
-		if self.batch_type == 'fixed':
-			train = (tot_pts - self.last_train[self.s] == self.batch_param[self.s])
-		elif self.batch_type == 'adaptive':
-			var = self.samp_var[self.s][(self.last_train[self.s]):tot_pts]
-			train = (sum([np.log(1 + v/self._lambda) for v in var]) > np.log(self.batch_param[self.s]))
-
-		return train
 
 	def train(self):
 		# Train the NN using the action-reward pairs in the training buffer
@@ -220,7 +195,7 @@ class BatchedNewAlg():
 		# Run an episode of bandit
 
 		postfix = {'total regret': 0.0}
-		# lambda_0 = 0.55 #*np.sqrt(self._lambda) # 0.55 for lambda = 0.5
+		# lambda_0 = 0.8 #*np.sqrt(self._lambda)     # 1.8 for mushroom, 1 for statlog, 1.5 for bank
 		t_const = self.lambda_0/np.sqrt(self.bandit.T)
 		best_idxs = [0 for _ in range(self.s_max)]
 		pts_exploited = [0 for _ in range(self.s_max)]
@@ -232,19 +207,15 @@ class BatchedNewAlg():
 				hat_A = np.arange(self.bandit.n_arms)
 				to_exit = False
 				self.s = 0
-				eta_t = t_const
+				eta_t = t_const # min(0.2, np.sqrt(1/(t+1))) #0.2/np.sqrt(t+1)
 				c = 2
 
 				while not(to_exit):
+					# if self.s == 0:
+					# 	c0 = np.log(t+2)
+					# else:
+					# 	c0 = 1
 					# update confidence of all arms based on observed features at time t
-
-					# train the neural network
-					pts_in_s = len(self.iteration_idxs[self.s])
-					if self.to_train(pts_in_s) and pts_in_s > 0:
-						self.train()
-						self.last_train[self.s] = pts_in_s
-
-
 					self.update_confidence_bounds()
 					best_idxs[self.s] = hat_A[np.argmax(self.mu[self.iteration][hat_A])]
 					
@@ -255,16 +226,17 @@ class BatchedNewAlg():
 							self.s += 1
 							self.iteration_idxs[self.s].append(t)
 							self.action_idxs[self.s].append(self.action)
-							self.samp_var[self.s].append(self.sigma[self.iteration][self.action]**2)
-							# if len(self.iteration_idxs[self.s]) % self.train_every == 0:
-							# 	self.train()
-							self.update_Z_inv()
+							if len(self.iteration_idxs[self.s]) % self.train_every == 0:
+								self.train()
+							self.update_Z_inv()  
 							self.regret[t] = self.bandit.best_rewards_oracle[t]-self.bandit.rewards[t, self.action]
 							self.iteration += 1
 							to_exit = True
 						else:
 							max_LCB = np.max(self.mu[self.iteration][hat_A] - self.beta_t*self.sigma[self.iteration][hat_A])
-							hat_A = hat_A[self.upper_confidence_bounds[self.iteration][hat_A] >= max_LCB]
+							idxs_to_keep = self.upper_confidence_bounds[self.iteration][hat_A] >= max_LCB
+							if idxs_to_keep.any():
+								hat_A = hat_A[idxs_to_keep]
 							self.s += 1
 					else:
 						if self.s == 0 or pts_exploited[self.s] > alpha_s[self.s]:
@@ -275,10 +247,9 @@ class BatchedNewAlg():
 							pts_exploited[self.s] += 1
 						self.iteration_idxs[self.s].append(t)
 						self.action_idxs[self.s].append(self.action)
-						self.samp_var[self.s].append(self.sigma[self.iteration][self.action]**2)
-						# if len(self.iteration_idxs[self.s]) % self.train_every == 0:
-						# 	self.train()
-						self.update_Z_inv()
+						if len(self.iteration_idxs[self.s]) % self.train_every == 0:
+							self.train()
+						self.update_Z_inv()  
 						self.regret[t] = self.bandit.best_rewards_oracle[t]-self.bandit.rewards[t, self.action]
 						self.iteration += 1
 						to_exit = True
@@ -294,9 +265,9 @@ class BatchedNewAlg():
 			mins, secs = pbar.format_interval(pbar.format_dict['elapsed']).split(':')
 			self.time_elapsed = 60*int(mins) + int(secs)
 
-			# lens = [len(x) for x in self.iteration_idxs]
-			# print(lens)
-			# print(self.sigma[-5:])
+		# lens = [len(x) for x in self.iteration_idxs]
+		# print(lens)
+		# print(self.sigma[-5:])
 
 
 

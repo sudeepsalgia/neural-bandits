@@ -122,7 +122,7 @@ class LinUCB():
 				self.regret[t] = self.bandit.best_rewards_oracle[t]-self.bandit.rewards[t, self.action]
 
 
-				# log
+				# log the regret
 				postfix['total regret'] += self.regret[t]
 
 				if t % self.throttle == 0:

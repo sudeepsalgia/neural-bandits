@@ -6,9 +6,9 @@ from utils import *
 from bandit import *
 
 
-class NewAlg():
+class NeuralGCB():
 
-	def __init__(self, bandit, hidden_size=20, n_layers=2, _lambda=1.0, delta=0.01, nu=-1.0, training_window=100, s_max=-1,
+	def __init__(self, bandit, hidden_size=20, n_layers=2, _lambda=1.0, delta=0.01, nu=-1.0, training_window=100, s_max=-1, lambda_0=1,
 		p=0.0, eta=0.01, B=1, epochs=1, train_every=1, throttle=1,use_cuda=False, activation_param=1, model_seed=42):
 
 		# Initialize the bandit object which contains the features and the rewards
@@ -38,6 +38,9 @@ class NewAlg():
 		if s_max == -1:
 			s_max = int(np.ceil(np.log(self.bandit.T)))
 		self.s_max = s_max + 1 # Adding a 1 for the dummy model used to obtain gradients
+
+		# Set max variance
+		self.lambda_0 = lambda_0
 
 		# maximum number of rewards in the training buffer
 		self.training_window = training_window
@@ -82,7 +85,7 @@ class NewAlg():
 	def beta_t(self):
 		# Calculate the beta_t factor
 
-		return (self.B + self.nu*np.sqrt(2*np.log(1/self.delta)/self._lambda))
+		return (2*self.B + self.nu*np.sqrt((2.0/self._lambda)*np.log(1/self.delta))
 
 	def reset_UCB(self):
 		# Initialize the matrices to store the posterior mean and standard deviation of all arms at all times
@@ -192,8 +195,8 @@ class NewAlg():
 		# Run an episode of bandit
 
 		postfix = {'total regret': 0.0}
-		lambda_0 = 1.3 #*np.sqrt(self._lambda) # 0.55 for lambda = 0.5, 0.8 for s=2, 1.8 for s = 1
-		t_const = lambda_0/np.sqrt(2*self.bandit.T)
+		# lambda_0 = 1.3 #*np.sqrt(self._lambda) # 0.55 for lambda = 0.5, 0.8 for s=2, 1.8 for s = 1
+		t_const = self.lambda_0/np.sqrt(2*self.bandit.T)
 		best_idxs = [0 for _ in range(self.s_max)]
 		pts_exploited = [0 for _ in range(self.s_max)]
 		alpha_s = [np.log(self.bandit.T)*20*(4**(r+1)) for r in range(self.s_max)]
@@ -217,7 +220,7 @@ class NewAlg():
 					if self.mu[self.iteration].size > 0:
 						best_idxs[self.s] = hat_A[np.argmax(self.mu[self.iteration][hat_A])]
 					
-					if np.all(self.sigma[self.iteration][hat_A] <= lambda_0*c**(-(self.s+1))): 
+					if np.all(self.sigma[self.iteration][hat_A] <= self.lambda_0*c**(-(self.s+1))): 
 						UCB_max = hat_A[np.argmax(self.upper_confidence_bounds[self.iteration][hat_A])]
 						if self.sigma[self.iteration][UCB_max] <= eta_t:
 							self.action = UCB_max
@@ -240,7 +243,7 @@ class NewAlg():
 							self.s += 1
 					else:
 						if self.s == 0 or pts_exploited[self.s] > alpha_s[self.s]:
-							large_var_pts = hat_A[self.sigma[self.iteration][hat_A] > lambda_0*c**(-(self.s+1))]
+							large_var_pts = hat_A[self.sigma[self.iteration][hat_A] > self.lambda_0*c**(-(self.s+1))]
 							self.action = np.random.choice(large_var_pts, 1)[0]
 						else:
 							self.action = best_idxs[self.s - 1]

@@ -29,7 +29,7 @@ class Model(nn.Module):
 
         self.n_layers = n_layers
         c_sigma = 2/np.prod([(2*k + 1) for k in range(s)])
-        self.scale_cnst = np.sqrt(c_sigma) #/hidden_size
+        self.scale_cnst = np.sqrt(c_sigma)
 
         if self.n_layers == 1:
             self.layers = [nn.Linear(input_size, 1)]
