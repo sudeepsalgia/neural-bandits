@@ -7,7 +7,7 @@ lambda_vec = [0.05, 0.1, 0.5]
 # lambda_vec = [0.1, 0.5, 1]
 
 
-reward_func = 'mushroom'
+reward_func = 'shuttle'
 # algo = 'NeuralUCB'
 
 # print(algo)
@@ -29,7 +29,7 @@ algos = ['NeuralUCB', 'SupNNUCB', 'NeuralTS', 'NewAlg']
 
 
 for a in algos:
-	filename = './' + a + '_' + reward_func + '.pkl'
+	filename = './' + a + '_' + reward_func + '_2.pkl'
 	with open(filename, 'rb') as f:
 		saved_tuple = pickle.load(f)
 	f.close()

@@ -34,7 +34,7 @@ hidden_size = 80
 epochs = 400  # 200 for mushroom, 400 for shuttle
 train_every = 5
 use_cuda = False
-B = 2
+B = 1
 s = 2
 
 filename = 'shuttle.pkl'

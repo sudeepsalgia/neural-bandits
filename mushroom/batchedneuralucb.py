@@ -6,10 +6,10 @@ from utils import *
 from banditreal import *
 
 
-class NeuralUCB():
+class BatchedNeuralUCB():
 
 	def __init__(self, bandit, hidden_size=20, n_layers=2, _lambda=1.0, delta=0.01, nu=-1.0, training_window=100,
-		p=0.0, eta=0.01, B=1, epochs=1, train_every=1, throttle=1,use_cuda=False, activation_param=1, model_seed=42):
+		p=0.0, eta=0.01, B=1, epochs=1, batch_type='fixed', batch_param=0, throttle=1,use_cuda=False, activation_param=1, model_seed=42):
 
 		# Initialize the bandit object which contains the features and the rewards
 		self.bandit = bandit
@@ -61,8 +61,22 @@ class NeuralUCB():
 		# Set the throttle for the progress bar
 		self.throttle = throttle
 
-		# delay in feedback
-		self.train_every = train_every
+		# set the batch size and type
+		# if batch type is fixed, batch_param denotes the number of batches and if batch type is fixed batch_param denotes the  
+		# threshold for the ratio of determinants
+		self.batch_type = batch_type
+		if self.batch_type == 'fixed':
+			if batch_param == 0:
+				self.train_every = 1
+				self.n_batches = self.bandit.T
+			else:
+				self.n_batches = batch_param
+				self.train_every = int(np.floor(self.bandit.T/self.n_batches))
+		elif self.batch_type == 'adaptive':
+			if batch_param == 0:
+				self.batch_param = 2
+			else:
+				self.batch_param = batch_param
 
 		# reset and initialize all variables of interest to be used while the algorithm runs
 		self.reset()
@@ -77,12 +91,15 @@ class NeuralUCB():
 	def beta_t(self):
 		# Calculate the beta_t factor
 
-		return (self.B + self.nu*np.sqrt(np.sum(np.log(1 + self.samp_var[:self.iteration]/(self._lambda))) + 2 * np.log(1/self.delta)))
+		return (self.B + self.nu*np.sqrt(np.sum(np.log(1 + self.samp_var[:self.last_train]/(self._lambda))) + 2 * np.log(1/self.delta)))
 
 	def reset_UCB(self):
 		# Initialize the matrices to store the posterior mean and standard deviation of all arms at all times
 		self.sigma = np.empty((self.bandit.T, self.bandit.n_arms))
 		self.mu = np.empty((self.bandit.T, self.bandit.n_arms))
+
+		# Initialize matrix to store the posterior variance with all points and not just until previously trained
+		self.sigma_updated = np.empty((self.bandit.T, self.bandit.n_arms))
 
 		# Initialize a vector to store the posterior variances of the sampled points
 		self.samp_var = np.empty(self.bandit.T)
@@ -104,6 +121,7 @@ class NeuralUCB():
 	def reset_Z_inv(self):
 		# Initialize the matrix that stores Z^{-1} = (lambda I + G^T G )^{-1}
 		self.Z_inv = np.eye(self.approximator_dim)/self._lambda
+		# self.Z = np.eye(self.approximator_dim)*self._lambda
 
 	def reset_normalized_gradient(self):
 		# Initialize a matrix that stores g(a, theta)/sqrt(m) for all actions a at each time instant
@@ -120,6 +138,12 @@ class NeuralUCB():
 		# Set the iteration counter to zero
 		self.iteration = 0
 
+		# Set the time taken by the algorithm to run to 0
+		self.time_elapsed = 0
+
+		# Set the last training instant to zero
+		self.last_train = 0
+
 	def update_output_gradient(self):
 		# Get gradient of network prediction w.r.t network weights.
 
@@ -130,15 +154,17 @@ class NeuralUCB():
 			y = self.model(x)
 			y.backward()
 
-			self.norm_grad[a] = torch.cat([w.grad.detach().flatten()  for w in self.model.parameters() if w.requires_grad]
-				).to(self.device) #/ np.sqrt(self.hidden_size)
+			self.norm_grad[a] = torch.cat([w.grad.detach().flatten()   for w in self.model.parameters() if w.requires_grad]
+				).to(self.device) # / np.sqrt(self.hidden_size)
 
-	def update_confidence_bounds(self):
+	def update_confidence_bounds(self, inv_Z=None):
 		# Update confidence bounds and related quantities for all arms.
 		self.update_output_gradient()
 
 		# Calcuating the posterior standard deviations
-		self.sigma[self.iteration] = np.array([np.sqrt(np.dot(self.norm_grad[a], np.dot(self.Z_inv, self.norm_grad[a].T))) for a in self.bandit.arms])
+		self.sigma_updated[self.iteration] = np.array([np.sqrt(np.dot(self.norm_grad[a], np.dot(self.Z_inv, self.norm_grad[a].T))) for a in self.bandit.arms])
+		self.sigma[self.iteration] = np.array([np.sqrt(np.dot(self.norm_grad[a], np.dot(inv_Z, self.norm_grad[a].T))) for a in self.bandit.arms])
+
 
 		# Update reward prediction mu
 		self.predict()
@@ -149,6 +175,15 @@ class NeuralUCB():
 	def update_Z_inv(self):
 		# Update the Z_inv matrix with the action chosen at a particular time
 		self.Z_inv = inv_sherman_morrison(self.norm_grad[self.action], self.Z_inv)
+
+	def to_train(self, t):
+		# Decide whether the neural network should be trained at the current iteration
+		if self.batch_type == 'fixed':
+			train = (t % self.train_every == 0)
+		elif self.batch_type == 'adaptive':
+			train = (np.sum(np.log(1 + self.samp_var[(self.last_train):t]/(self._lambda))) > np.log(self.batch_param))
+
+		return train
 
 	def train(self):
 		# Train the NN using the action-reward pairs in the training buffer
@@ -179,25 +214,31 @@ class NeuralUCB():
 		# Run an episode of bandit
 
 		postfix = {'total regret': 0.0}
+		inv_Z = np.eye(self.approximator_dim)/self._lambda
 
 		with tqdm(total=self.bandit.T, postfix=postfix) as pbar:
 			for t in range(self.bandit.T):
+				# train the nn
+				if self.to_train(t):
+					self.train()
+					self.last_train = t
+					inv_Z = self.Z_inv
+
 				# update confidence of all arms based on observed features at time t
-				self.update_confidence_bounds()
+				self.update_confidence_bounds(inv_Z)
 
 				# pick action with the highest boosted estimated reward
 				self.action = np.argmax(self.upper_confidence_bounds[self.iteration]).astype('int')
-				# self.action = np.argmax(self.mu[self.iteration]).astype('int')
 				self.actions[t] = self.action
-				self.samp_var[t] = self.sigma[t, self.action]**2
+				self.samp_var[t] = self.sigma_updated[t, self.action]**2
 
-				# train the nn
-				if t % self.train_every == 0:
-					self.train()
-					# print(self.upper_confidence_bounds[t], self.bandit.rewards[t])
+				if self.action < 0:
+					print(self.action)
 
 				# update the matrix Z_inv
 				self.update_Z_inv()
+				# self.Z += np.outer(self.norm_grad[self.action], self.norm_grad[self.action])
+
 
 				# compute regret
 				self.regret[t] = self.bandit.best_rewards_oracle[t]-self.bandit.rewards[t, self.action]
@@ -214,10 +255,6 @@ class NeuralUCB():
 
 			mins, secs = pbar.format_interval(pbar.format_dict['elapsed']).split(':')
 			self.time_elapsed = 60*int(mins) + int(secs)
-
-		# print(self.beta_t)
-		# print(self.mu[-10:])
-		# print(self.bandit.rewards[-10:])
 
 
 

@@ -19,25 +19,25 @@ from neuralts import *
 time_horizon = 2000
 n_arms = 2
 noise_std = 0.1
-nu = 0.1
+nu = 0
 n_sim = 15
 bandit_seed = 42
 nn_seeds = (np.random.random(n_sim)*1000).astype('int')
 reward_seeds = (np.random.random(n_sim)*1000).astype('int')
 delta = 0.1
-eta = 0.01   # 0.01 for mushroom, 0.001 for shuttle
-_lambda = 0.5
+eta = 0.005   # 0.01 for mushroom, 0.001 for shuttle
+_lambda = 1
 lambda_0 = 1.8
 
 # Neural Network parameters
 hidden_size = 80
-epochs = 400    # 200 for mushroom, 400 for shuttle
+epochs = 200    # 200 for mushroom, 400 for shuttle
 train_every = 5
 use_cuda = False
-B = 2
+B = 1.25
 s = 2
 
-filename = 'shuttle.pkl'
+filename = 'mushroom.pkl'
 with open(filename, 'rb') as f:
 	(X, y) = pickle.load(f)
 	f.close()
@@ -55,7 +55,7 @@ settings = {'T': time_horizon,
 			'hidden_size': hidden_size,
 			'epochs': epochs,
 			'train_every': train_every,
-			'reward_func': 'shuttle',
+			'reward_func': 'mushroom',
 			'B': B,
 			'lambda_0': lambda_0,
 			'activation function': 'ReLU ' + str(s),

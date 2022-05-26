@@ -78,7 +78,7 @@ for n in range(n_sim):
 	time_taken[n] = model.time_elapsed
 
 save_tuple = (settings, regrets, time_taken)
-filename = './' + settings['algo'] + '_' + settings['reward_func'] + '_2.pkl'
+filename = './' + settings['algo'] + '_' + settings['reward_func'] + '_2_22.pkl'
 with open(filename, 'wb') as f:
 	pickle.dump(save_tuple, f)
 f.close()

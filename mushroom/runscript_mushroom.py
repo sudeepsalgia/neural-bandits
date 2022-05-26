@@ -23,7 +23,7 @@ np.random.seed(SEED*2)
 p = 0
 hidden_size = 80
 epochs = 200
-train_every = 5
+train_every = 1
 use_cuda = False 
 
 filename = 'mushroom.pkl'

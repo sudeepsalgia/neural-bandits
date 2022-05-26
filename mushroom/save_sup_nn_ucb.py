@@ -27,17 +27,17 @@ reward_seeds = (np.random.random(n_sim)*1000).astype('int')
 delta = 0.1
 eta = 0.01
 _lambda = 0.5
-lambda_0 = 0.45 # 1.8 for mushroom, 1 for shuttle (s=1),  0.45 for shuttle (s=2)
+lambda_0 = 1.8 # 1.8 for mushroom, 1 for shuttle (s=1),  0.45 for shuttle (s=2)
 
 # Neural Network parameters
-hidden_size = 80
-epochs = 400  # 200 for mushroom, 400 for shuttle
+hidden_size = 50
+epochs = 200  # 200 for mushroom, 400 for shuttle
 train_every = 5
 use_cuda = False
 B = 2
-s = 2
+s = 1
 
-filename = 'shuttle.pkl'
+filename = 'mushroom.pkl'
 with open(filename, 'rb') as f:
 	(X, y) = pickle.load(f)
 	f.close()
@@ -55,7 +55,7 @@ settings = {'T': time_horizon,
 			'hidden_size': hidden_size,
 			'epochs': epochs,
 			'train_every': train_every,
-			'reward_func': 'shuttle',
+			'reward_func': 'mushroom',
 			'B': B,
 			'lambda_0': lambda_0,
 			'activation function': 'ReLU ' + str(s),
@@ -72,13 +72,15 @@ for n in range(n_sim):
 	bandit.reset_rewards(seed=reward_seeds[n])
 	model = SupNNUCB(bandit, hidden_size=hidden_size, _lambda=_lambda, delta=delta, nu=nu, training_window=time_horizon,
 					  eta=eta, B=B, epochs=epochs, train_every=train_every, use_cuda=use_cuda, activation_param=s, model_seed=nn_seeds[n], lambda_0=lambda_0)
-
-	model.run()
+	try:
+		model.run()
+	except:
+		print('Error on iteration', n)
 	regrets[n] = np.cumsum(model.regret)
 	time_taken[n] = model.time_elapsed
 
 save_tuple = (settings, regrets, time_taken)
-filename = './' + settings['algo'] + '_' + settings['reward_func'] + '_2.pkl'
+filename = './' + settings['algo'] + '_' + settings['reward_func'] + '.pkl'
 with open(filename, 'wb') as f:
 	pickle.dump(save_tuple, f)
 f.close()

@@ -42,7 +42,7 @@ class ContextualBanditReal():
 		self.rewards = np.zeros((self.T, self.n_arms))
 		# self.best_rewards_oracle = np.ones(self.T)  # max reward is 1
 		for t in range(self.T):
-			x0 = x[t]*0.4
+			x0 = x[t]*1.0
 			# x0 /= np.linalg.norm(x0, ord=2)
 			for a in range(self.n_arms):
 				self.features[t][a][a*self.d:(a+1)*self.d] = x0

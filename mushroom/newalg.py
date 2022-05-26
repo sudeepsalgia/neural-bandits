@@ -265,9 +265,9 @@ class NewAlg():
 			mins, secs = pbar.format_interval(pbar.format_dict['elapsed']).split(':')
 			self.time_elapsed = 60*int(mins) + int(secs)
 
-		lens = [len(x) for x in self.iteration_idxs]
-		print(lens)
-		print(self.sigma[-5:])
+		# lens = [len(x) for x in self.iteration_idxs]
+		# print(lens)
+		# print(self.sigma[-5:])
 
 
 
